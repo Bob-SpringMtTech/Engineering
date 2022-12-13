@@ -145,7 +145,7 @@ class ThreadUN:
         return self
 
     def __str__(self):
-        return f'size: {self._d} pitch: {self._P} pitch dia: {self._d2:0.4f} minor dia: {self._d1:0.4f}'
+        return f'{self._d:0.3f}-{self.TPI:0.1f} {self._series} - {self.Class}'
 
     @property
     def IncludedAngle(self):
@@ -161,11 +161,11 @@ class ThreadUN:
 
     @property
     def Pitch(self):
-        return self._pitch
+        return self._P
 
     @property
     def TPI(self):
-        return 1.0 / self._pitch
+        return 1.0 / self._P
 
     @property
     def Series(self):
@@ -287,17 +287,17 @@ class ThreadM:
     table3_tg8 = [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, 315.0, 375.0, 425.0, 475.0, 530.0, 600.0, 710.0, 800.0, 900.0, 950.0, 1060.0, 1120.0, 1180.0, 1250.0, 1600.0]
 
     def TD1(pitch, tol_grade):
-        loc = pitch_list.index(pitch)
+        loc = ThreadM.pitch_list.index(pitch)
         if (tol_grade == 4):
-            return table3_tg4[loc]
+            return ThreadM.table3_tg4[loc]
         elif (tol_grade == 5):
-            return table3_tg5[loc]
+            return ThreadM.table3_tg5[loc]
         elif (tol_grade == 6):
-            return table3_tg6[loc]
+            return ThreadM.table3_tg6[loc]
         elif (tol_grade == 7):
-            return table3_tg7[loc]
+            return ThreadM.table3_tg7[loc]
         elif (tol_grade == 8):
-            return table3_tg8[loc]
+            return ThreadM.table3_tg8[loc]
         
         return np.nan
 
@@ -306,13 +306,13 @@ class ThreadM:
     table4_tg8 = [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, 236.0, 280.0, 335.0, 375.0, 425.0, 450.0, 530.0, 600.0, 670.0, 750.0, 800.0, 850.0, 900.0, 950.0, 1180.0]
 
     def Td(pitch, tol_grade):
-        loc = pitch_list.index(pitch)
+        loc = ThreadM.pitch_list.index(pitch)
         if (tol_grade == 4):
-            return table4_tg4[loc]
+            return ThreadM.table4_tg4[loc]
         elif (tol_grade == 6):
-            return table4_tg6[loc]
+            return ThreadM.table4_tg6[loc]
         elif (tol_grade == 8):
-            return table4_tg8[loc]
+            return ThreadM.table4_tg8[loc]
         
         return np.nan
 
@@ -326,23 +326,23 @@ class ThreadM:
         if (dia < 0.99):
             return np.nan
         loc = -1
-        for i in range(len(basic_dia_list)):
-            if (dia < basic_dia_list[i]):
+        for i in range(len(ThreadM.basic_dia_list)):
+            if (dia < ThreadM.basic_dia_list[i]):
                 loc = i
                 break
         if (loc == -1):
             return np.nan
         
         if (tol_grade == 4):
-            return table5_tg4[loc]
+            return ThreadM.table5_tg4[loc]
         elif (tol_grade == 5):
-            return table5_tg5[loc]
+            return ThreadM.table5_tg5[loc]
         elif (tol_grade == 6):
-            return table5_tg6[loc]
+            return ThreadM.table5_tg6[loc]
         elif (tol_grade == 7):
-            return table5_tg7[loc]
+            return ThreadM.table5_tg7[loc]
         elif (tol_grade == 8):
-            return table5_tg8[loc]
+            return ThreadM.table5_tg8[loc]
 
         return np.nan
 
@@ -358,44 +358,44 @@ class ThreadM:
         if (dia < 0.99):
             return np.nan
         loc = -1
-        for i in range(len(basic_dia_list)):
-            if (dia < basic_dia_list[i]):
+        for i in range(len(ThreadM.basic_dia_list)):
+            if (dia < ThreadM.basic_dia_list[i]):
                 loc = i
                 break
         if (loc == -1):
             return np.nan
         
         if (tol_grade == 3):
-            return table6_tg3[loc]
+            return ThreadM.table6_tg3[loc]
         elif (tol_grade == 4):
-            return table6_tg4[loc]
+            return ThreadM.table6_tg4[loc]
         elif (tol_grade == 5):
-            return table6_tg5[loc]
+            return ThreadM.table6_tg5[loc]
         elif (tol_grade == 6):
-            return table6_tg6[loc]
+            return ThreadM.table6_tg6[loc]
         elif (tol_grade == 7):
-            return table6_tg7[loc]
+            return ThreadM.table6_tg7[loc]
         elif (tol_grade == 8):
-            return table6_tg8[loc]
+            return ThreadM.table6_tg8[loc]
         elif (tol_grade == 9):
-            return table6_tg9[loc]
+            return ThreadM.table6_tg9[loc]
 
         return np.nan
 
 
 
-basic = 40.0
-pitch = 3.00
-le = 36.1
-print(f'cat = {thread_engagement_cat(basic, pitch, le)}')
+#basic = 40.0
+#pitch = 3.00
+#le = 36.1
+#print(f'cat = {thread_engagement_cat(basic, pitch, le)}')
 
 
 
 
-d = 0.5
-tpi = 28
-t1 = ThreadSeriesUN(d, tpi, 'UNEF', 2)
-print(f'LE: {t1.LE:0.4f}   allow: {t1._allowance:0.4f}   p tol: {t1._d2_tol:0.6f}   TSA: {t1.TensileArea():0.6f}')
-print(t1.BasicDims())
-print(f'Ext - Maj: {t1.Major_External()}  Ext - Pitch: {t1.Pitch_External()}  Ext - Minor: {t1.Minor_External()}')
-print(f'Int - Maj: {t1.Major_Internal()}  Int - Pitch: {t1.Pitch_Internal()}  Int - Minor: {t1.Minor_Internal()}')
+#d = 0.5
+#tpi = 28
+#t1 = ThreadUN(d, tpi, 'UNEF', 2)
+#print(f'LE: {t1.LE:0.4f}   allow: {t1._allowance:0.4f}   p tol: {t1._d2_tol:0.6f}   TSA: {t1.TensileArea():0.6f}')
+#print(t1.BasicDims())
+#print(f'Ext - Maj: {t1.Major_External()}  Ext - Pitch: {t1.Pitch_External()}  Ext - Minor: {t1.Minor_External()}')
+#print(f'Int - Maj: {t1.Major_Internal()}  Int - Pitch: {t1.Pitch_Internal()}  Int - Minor: {t1.Minor_Internal()}')
