@@ -1,3 +1,123 @@
+# B31_3_Para304_1_2(P, D, d, c, S, E, W, t_act = (0.0 * uin))
+#   P: design pressure
+#   D: outside diameter
+#   d: inside diameter
+#   c: sum of allowances - mechanical, corrosion
+#   S: stress value from B31.3 table A-1
+#   E: quality factor from B31.3 table A-1A or A-1B
+#   W: weld joint strength reduction factor per B31.3 para 302.3.5(e)
+#   t_act: actual thickness to be compared with calculated required thickness
+#   returns: required pipe wall thickness
+#
+# UG34_C_2_Eq1(d, P, S, C, E, t_act = (0.0 * uin))
+#   d: diameter, or short span, measured as indicated in VIII, Div 1 Fig. UG-34
+#   P: internal design pressure
+#   S: maximum allowable stress value in tension from applicable table of stress values referenced by VIII, Div 1 UG-23
+#   C: a factor depending upon the method of attachment of head, shell dimensions, and other items as listed in UG-34(d), 
+#      dimensionless. The factors for welded covers also include a factor of 0.667 that effectively increases the allowable
+#      stress for such constructions to 1.5S.
+#   E: joint efficiency, from VIII, Div 1 Table UW-12, of any Category A weld as defined in VIII, Div 1 UW-3(a)(1)
+#   t_act: actual thickness to be compared with calculated required thickness
+#   returns: required head thickness
+#
+# AppII_Dims(bo, od_contact_face, bolt_cir_dia)
+#   bo: basic gasket seating width (from Table 2-5.2)
+#   od_contact_face: outer diameter of the contact face between the gasket and the flange
+#   bolt_cir_dia: bolt circle diameter of the flange
+#   returns: G (diameter at location of gasket load reaction), hg (gasket moment arm), and b (effective gasket or 
+#            joint-contact-surface seating width [see VIII, Div 1, App 2, Note 1, 2-5(c)(1)])
+#
+# AppII_Wm1(P, G, b, m)
+#   P: internal design pressure
+#   G: diameter at location of gasket load reaction
+#   b: effective gasket or joint-contact-surface seating width [see VIII, Div 1, App 2, Note 1, 2-5(c)(1)]
+#   m: gasket factor, obtain from Table 2-5.1 [see VIII, Div 1, App 2, Note 1, 2-5(c)(1)]
+#   returns: Wm1 (minimum required bolt load for the operating conditions [see 2-5(c)])
+#
+# AppII_Wm2(G, b, y)
+#   G: diameter at location of gasket load reaction
+#   b: effective gasket or joint-contact-surface seating width [see VIII, Div 1, App 2, Note 1, 2-5(c)(1)]
+#   y: gasket or joint-contact-surface unit seating load, [see VIII, Div 1, App 2, Note 1, 2-5(c)]
+#   returns: Wm2 (minimum required bolt load for gasket seating [see VIII, Div 1, App 2, 2-5(c)])
+#
+# UG34_C_2_Eq2_Operating(d, P, S1, Wm1, hg, C, E)
+#   d: diameter, or short span, measured as indicated in VIII, Div 1 Fig. UG-34
+#   P: internal design pressure
+#   S1: maximum allowable stress value in tension at the operating temperature from applicable table of stress values 
+#       referenced by VIII, Div 1 UG-23
+#   Wm1: minimum required bolt load for the operating conditions from VIII, Div 1, App 2 Formula (3) of 2-5(e)
+#   hg: gasket moment arm, equal to the radial distance from the centerline of the bolts to the line of the gasket reaction,
+#       as shown in VIII, Div 1, App 2 Table 2-5.2
+#   C: a factor depending upon the method of attachment of head, shell dimensions, and other items as listed in UG-34(d), 
+#      dimensionless. The factors for welded covers also include a factor of 0.667 that effectively increases the allowable
+#      stress for such constructions to 1.5S.
+#   E: joint efficiency, from VIII, Div 1 Table UW-12, of any Category A weld as defined in VIII, Div 1 UW-3(a)(1)
+#   returns: required head thickness to satisfy the operating load
+#
+# UG34_C_2_Eq2_Gasket(d, S2, W2, hg, E)
+#   d: diameter, or short span, measured as indicated in VIII, Div 1 Fig. UG-34
+#   S2: maximum allowable stress value in tension at atmospheric temperature from applicable table of stress values 
+#       referenced by VIII, Div 1 UG-23
+#   Wm2: minimum required bolt load for the gasket seating conditions from VIII, Div 1, App 2 Formula (4) of 2-5(e)
+#   hg: gasket moment arm, equal to the radial distance from the centerline of the bolts to the line of the gasket reaction,
+#       as shown in VIII, Div 1, App 2 Table 2-5.2
+#   E: joint efficiency, from VIII, Div 1 Table UW-12, of any Category A weld as defined in VIII, Div 1 UW-3(a)(1)
+#   returns: required head thickness to satisfy the gasket seating load
+#
+# UG34_C_2_Eq2(d, P, S1, S2, W1, W2, hg, C, E, t_act = (0.0 * uin))
+#   d: diameter, or short span, measured as indicated in VIII, Div 1 Fig. UG-34
+#   P: internal design pressure
+#   S1: maximum allowable stress value in tension at the operating temperature from applicable table of stress values 
+#       referenced by VIII, Div 1 UG-23
+#   S2: maximum allowable stress value in tension at atmospheric temperature from applicable table of stress values 
+#       referenced by VIII, Div 1 UG-23
+#   Wm1: minimum required bolt load for the operating conditions from VIII, Div 1, App 2 Formula (3) of 2-5(e)
+#   Wm2: minimum required bolt load for the gasket seating conditions from VIII, Div 1, App 2 Formula (4) of 2-5(e)
+#   hg: gasket moment arm, equal to the radial distance from the centerline of the bolts to the line of the gasket reaction,
+#       as shown in VIII, Div 1, App 2 Table 2-5.2
+#   C: a factor depending upon the method of attachment of head, shell dimensions, and other items as listed in UG-34(d), 
+#      dimensionless. The factors for welded covers also include a factor of 0.667 that effectively increases the allowable
+#      stress for such constructions to 1.5S.
+#   E: joint efficiency, from VIII, Div 1 Table UW-12, of any Category A weld as defined in VIII, Div 1 UW-3(a)(1)
+#   returns: required head thickness to satisfy both the operating and gasket seating loads
+#
+# AppII_Bolting(S, Wm, bolt_thd, N)
+#   S: maximum allowable stress value in tension at the appropriate temperature from applicable table of stress values 
+#      referenced by VIII, Div 1 UG-23
+#   Wm: minimum required bolt load for the appropriate conditions from VIII, Div 1, App 2 Formula (3) or (4) of 2-5(e)
+#   bolt_thd: an instance of class ThreadUN specifying size, tpi, series, and cls
+#   N: number of bolts
+#   returns: the actual bolting stress for the given conditions
+#
+# B16_34_Min_Wall_Thickness(Pc, dia, t_act = (0.0 * uin))
+#   Pc: pressure class
+#   dia: inside diameter.  See B16.34 para 6.1.2 for specifics
+#   t_act: actual thickness to be compared with calculated required thickness
+#   returns: required wall thickness
+#
+# B16_34_Bolted_Cover_Joint(Pc, Dg, bolt_thd, N, Sa)
+#   Pc: pressure class
+#   Dg: diameter bounded by the effective outside periphery of a gasket or O-ring or other seal-effective periphery
+#   bolt_thd: an instance of class ThreadUN specifying size, tpi, series, and cls
+#   N: number of bolts
+#   Sa: allowable bolt stress at 38°C (100°F)
+#   returns: the actual bolting stress for the given conditions
+#
+# B16_34_Threaded_Cover_Joint(Pc, Dg, cover_thd, LE)
+#   Pc: pressure class
+#   Dg: diameter bounded by the effective outside periphery of a gasket or O-ring or other seal-effective periphery
+#   cover_thd: an instance of class ThreadUN specifying size, tpi, series, and cls
+#   LE: length of thread engagement
+#   returns: the actual bolting stress for the given conditions
+#
+# B16_34_Bolted_Body_Joint(Pc, Dg, bolt_thd, N, Sa)
+#   Pc: pressure class
+#   Dg: diameter bounded by the effective outside periphery of a gasket or O-ring or other seal-effective periphery
+#   bolt_thd: an instance of class ThreadUN specifying size, tpi, series, and cls
+#   N: number of bolts
+#   Sa: allowable bolt stress at 38°C (100°F)
+#   returns: the actual bolting stress for the given conditions
+
 import numpy as np
 import math
 
@@ -49,7 +169,7 @@ verbose = True
 
 # B31.3 304.1 - Pressure Design of Straight Pipe
 
-def B31_1_Table304_1_1(D, d, c):
+def B31_3_Table304_1_1(D, d, c):
     t = (D - d) / 2.0
     if (t < (D / 6.0)):
         Y = 0.40 * uul
@@ -66,46 +186,45 @@ def B31_1_Table304_1_1(D, d, c):
 
     return Y
  
-def B31_1_Para304_1_2(P, D, d, c, S, E, W, t_act = (0.0 * uin)):
+def B31_3_Para304_1_2(P, D, d, c, S, E, W, t_act = (0.0 * uin)):
     if (verbose):
         print(f'Calculate required wall thickness per ASME B31.3 Para 304.1.2 eq(3a)')
     if ((P / S / E).Value(uul) > 0.385):
         t = np.nan * uin
         if (verbose):
             print('***error: P/SE > 0.385 - See B31.3 304.1.2(b)')
+    elif (d * 1.5 < D):
+        t = np.nan * uin
+        if (verbose):
+            print('***error: t >= D / 6 - See B31.3 304.1.2(b)')
     else:
-        Y = B31_1_Table304_1_1(D, d, c)
+        Y = B31_3_Table304_1_1(D, d, c)
         t = (P * D) / ((S * E * W) + (P * Y)) / 2.0
 
-        if (t >= D / 6.0):
-            t = np.nan * uin
-            if (verbose):
-                print('***error: t >= D / 6 - See B31.3 304.1.2(b)')
-        else:
-            f_str = '  t = (P*D) / (2 * (S*E*W + P*Y))'
-        
-            if (verbose):
-                st = uFormat(t, ulen, flen)
-                sP = uFormat(P, upr, fpr)
-                sD = uFormat(D, ulen, flen)
-                sS = uFormat(S, ust, fst)
-                sE = uFormat(E, uul, ful)
-                sW = uFormat(W, uul, ful)
-                sY = uFormat(Y, uul, ful)
-                print(f_str)
-                print(f'  t = {st} = ({sP} * {sD}) / (2 * ({sS} * {sE} * {sW} + {sP} * {sY})')
+        f_str = '  t = (P*D) / (2 * (S*E*W + P*Y))'
+    
+        if (verbose):
+            st = uFormat(t, ulen, flen)
+            sP = uFormat(P, upr, fpr)
+            sD = uFormat(D, ulen, flen)
+            sS = uFormat(S, ust, fst)
+            sE = uFormat(E, uul, ful)
+            sW = uFormat(W, uul, ful)
+            sY = uFormat(Y, uul, ful)
+            print(f_str)
+            print(f'  t = {st} = ({sP} * {sD}) / (2 * ({sS} * {sE} * {sW} + {sP} * {sY})')
 
-                if (t_act.Value(uin) > 0.0):
-                    st_act = uFormat(t_act, ulen, flen)
-                    if (t > t_act):
-                        print(f'  t > t act {st_act}')
-                        print(f'  {st} > {st_act}')
-                        status = Test_Fail_Str
-                    else:
-                        status = Test_Pass_Str
-                        print(f'  t <= t act {st_act}')
-                        print(f'  {st} <= {st_act}')
-                    print(f'  {status}')
+            if (t_act.Value(uin) > 0.0):
+                st_act = uFormat(t_act, ulen, flen)
+                if (t > t_act):
+                    print(f'  t > t act {st_act}')
+                    print(f'  {st} > {st_act}')
+                    status = Test_Fail_Str
+                else:
+                    status = Test_Pass_Str
+                    print(f'  t <= t act {st_act}')
+                    print(f'  {st} <= {st_act}')
+                print(f'  {status}')
 
     return t
 
@@ -160,7 +279,7 @@ def AppII_Dims(bo, od_contact_face, bolt_cir_dia):
     G = od_contact_face - b * 2.0
     hg = (bolt_cir_dia - G) / 2.0
 
-    f2_str = '  G = OD_face * 2 * b'
+    f2_str = '  G = OD_face - 2 * b'
     f3_str = '  hg = (bc - G) / 2'
 
     if (verbose):
@@ -179,7 +298,7 @@ def AppII_Dims(bo, od_contact_face, bolt_cir_dia):
         print(f1_str)
         print(v1_str)
         print(f2_str)
-        print(f'  G = {Gs} = {cfs} * 2 * {bs}')
+        print(f'  G = {Gs} = {cfs} - 2 * {bs}')
         print(f3_str)
         print(f'  hg = {hgs} = ({bcs} - {Gs}) / 2')
 
@@ -211,7 +330,7 @@ def AppII_Wm2(G, b, y):
 
     sWm2 = uFormat(Wm2, ufr, ffr)
     sb   = uFormat(b, ulen, flen)
-    sG   = uFormat(G, upr, fpr)
+    sG   = uFormat(G, ulen, flen)
     sy   = uFormat(y, upr, fpr)
 
     if (verbose):
@@ -573,3 +692,76 @@ def B16_34_Bolted_Body_Joint(Pc, Dg, bolt_thd, N, Sa):
         print(f'  {status}\n')
 
     return S_act   
+
+
+def B16_34_Threaded_Cover_Joint(Pc, Dg, cover_thd, LE):
+    if (verbose):
+        print(f'Calculate required shear area of the cover and compare to actual, B16.34 para 6.4.2.2')
+
+    f1_str = '  Ag = pi / 4 * Dg^2'
+    f2_str = '  As = Thread shear area'
+    f3_str = '  Pc * Ag / As <= 3300'
+    
+    Ag = Dg.squared() * math.pi / 4.0
+    cover_thd.LE = LE.Value(uin)
+    Asi = cover_thd.ShearAreaInternal()
+    Asx = cover_thd.ShearAreaExternal()
+    if (Asi < Asx):
+        As = Asi * usqin
+    else:
+        As = Asx * usqin
+
+    S_act = Pc * Ag / As
+    S_lim = 3300.0 * upsi
+
+    if (S_act > S_lim):
+        status = Test_Fail_Str
+    else:
+        status = Test_Pass_Str
+
+    if (verbose):
+        sPc = uFormat(Pc, upr, fpr)
+        sDg = uFormat(Dg, ulen, flen)
+        sAg = uFormat(Ag, uar, far)
+        sthd = f'{cover_thd}'
+        sLE = uFormat(LE, ulen, flen)
+        sAs = uFormat(As, uar, far)
+        sS_act = uFormat(S_act, upr, fpr)
+
+        print(f1_str)
+        print(f'  Ag = {sAg} = pi / 4 * ({sDg})^2')
+        print(f2_str)
+        print(f'  {sthd}  length of engagement = {sLE}')
+        print(f'  As = {sAs}')
+        print(f3_str)
+        print(f'  {sPc} * {sAg} / {sAs} = {sS_act} <= 3300')
+        print(f'  {status}\n')
+
+
+    return S_act   
+
+def Wm2_Flat_Face(od, id, hd, N, y):
+    if (verbose):
+        print(f'Calculate the gasket seating load for a flat face gasket using the Garlock Design Spreadsheet Formulas')
+
+    f1_str = '  Ag = pi / 4 * (od^2 - id^2 * N * hd)'
+    f2_str = '  Wm2 = Ag * y'
+
+    ag = (od.squared() - id.squared() - hd.squared() * N) * np.pi / 4.0
+    Wm2 = ag * y
+
+    if (verbose):
+        sAg  = uFormat(ag, uar, far)
+        sod  = uFormat(od, ulen, flen)
+        sid  = uFormat(id, ulen, flen)
+        shd  = uFormat(hd, ulen, flen)
+        sy   = uFormat(y, upr, fpr)
+        sWm2 = uFormat(Wm2, ufr, ffr)
+        
+        print(f1_str)
+        print(f'  Ag = {sAg} = pi / 4 * (({sod})^2 - ({sid})^2 * N * ({shd}))')
+        print(f2_str)
+        print(f'  Wm2 = {Wm2} = {sAg} * {sy}')
+
+    return Wm2
+
