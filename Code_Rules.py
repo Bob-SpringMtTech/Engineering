@@ -694,7 +694,7 @@ def B16_34_Bolted_Body_Joint(Pc, Dg, bolt_thd, N, Sa):
     return S_act   
 
 
-def B16_34_Threaded_Cover_Joint(Pc, Dg, cover_thd, LE):
+def B16_34_Threaded_Body_Joint(Pc, Dg, cover_thd, LE):
     if (verbose):
         print(f'Calculate required shear area of the cover and compare to actual, B16.34 para 6.4.2.2')
 

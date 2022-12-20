@@ -217,12 +217,12 @@ class ThreadUN:
         return tsa - ba
 
     def ShearAreaInternal(self):
-        partA = math.pi * self._LE * self._d_min
+        partA = math.pi * self._LE * self._d_min / self._P
         partB = self._P / 2.0 + 2.0 / 3.0 * math.cos(math.radians(self._angle))*(self._d_min - self._D2_max)
         return partA * partB
 
     def ShearAreaExternal(self):
-        partA = math.pi * self._LE * self._D1_max
+        partA = math.pi * self._LE * self._D1_max / self._P
         partB = self._P / 2.0 + 2.0 / 3.0 * math.cos(math.radians(self._angle))*(self._d2_min - self._D1_max)
         return partA * partB
 
