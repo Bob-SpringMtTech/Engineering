@@ -12,6 +12,12 @@ def uFormat(q, u, f):
     return str
 
 # Spherical radius plug against a beveled seat.  All angles are taken from the axis of the parts (half angles)
+#  diaSeat - thru bore of the seat
+#  angSeat - the angle of the seat wrt the seat axis (half angle)
+#  htSeat  - the vertical distance between the upper corner and lower corner of the seat
+#  srPlug  - spherical radius of the plug
+#  htPlug  - vertical distance from the contact circle of the seat/plug to the lower cornet of the plug spg rad
+#  diaStem - the diameter of the stem below the lower corner of the seat
 class SphPlug_BevelSeat:
     def __init__(self, diaSeat, angSeat, htSeat, srPlug, htPlug, diaStem):
         self._diaSeat = diaSeat.SIValue
@@ -29,21 +35,30 @@ class SphPlug_BevelSeat:
         self._x2 = self._x1 + self._htSeat * math.tan(self._angSeat)
         self._y2 = self._y1 + self._htSeat
 
-        # xc, yc correspond to the contact point between the seat and plug (ideal)
-        self._xc = self._srPlug * math.sin(math.pi / 2.0 - self._angSeat)
-        self._yc = self._y1 + (self._xc - self._x1) / math.tan(self._angSeat)
+        if (self._srPlug > 0):
+            # xc, yc correspond to the contact point between the seat and plug (ideal)
+            self._xc = self._srPlug * math.sin(math.pi / 2.0 - self._angSeat)
+            self._yc = self._y1 + (self._xc - self._x1) / math.tan(self._angSeat)
+        else: # a zero value for srPlug will calculate srPlug so that it the contact circle is at the midpoint in the seat.
+            self._xc = (self._x1 + self._x2) / 2.0
+            self._yc = (self._y1 + self._y2) / 2.0
+            self._srPlug = self._xc / math.cos(self._angSeat)
 
         # x0, y0 correspond to the center of the spherical radius
         self._x0 = 0
         self._y0closed = self._srPlug * math.sin(self._angSeat) + self._yc
 
         # x3, y3 correspond to the lower corner of the plug where the spherical radius ends
-        self._x3 = math.sqrt(self._srPlug ** 2 - self._htPlug ** 2)
-        self._y3closed = self._y0closed - self._htPlug
+        self._y3closed = self._yc - self._htPlug
+        self._x3 = math.sqrt(self._srPlug ** 2 - (self._y0closed - self._y3closed) ** 2)
     
     @property
     def ContactDiameter(self):
         return self._xc * 2.0 * un.Length.m
+
+    @property
+    def SphRadPlug(self):
+        return self._srPlug * un.Length.m
 
     # Calculate the flow area for a given stroke.
     def FlowArea(self, stroke):
@@ -86,6 +101,7 @@ class SphPlug_BevelSeat:
 
 
 # Ball plug against a beveled seat.  All angles are taken from the axis of the parts (half angles)
+# htSeat was redefined in SphPlug_BevelSeat above - make sure this still works.
 class BallPlug_BevSeat:
     def __init__(self, diaSeat, angSeat, htSeat, diaBall):
         srPlug = diaBall / 2.0
@@ -145,7 +161,7 @@ def FlowArea_ConePlug_SqSeat(diaSeat, diaPlugTip, angPlug, stroke):
     # x1, y1 correspond to the corner of the seat
     x1 = diaSeat.SIValue / 2.0             
     y1 = 0                                
-2
+
     # x3, y3 correspond to the lower corner of the plug
     x3 = diaPlugTip.SIValue / 2.0
     y3 = - (x1 - x3) / math.tan(angPlugRad) + stroke.SIValue
