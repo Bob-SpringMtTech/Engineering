@@ -273,7 +273,7 @@ def AppII_Dims(bo, od_contact_face, bolt_cir_dia):
     b = bo
     f1_str = '  b = bo'
     if (bo.Value(uin) > 0.250):
-        b = math.sqrt(bo) / 2.0
+        b = (math.sqrt(bo.Value(uin)) / 2.0) * uin
         f1_str = '  b = sqrt(bo) / 2'
 
     G = od_contact_face - b * 2.0
@@ -291,7 +291,7 @@ def AppII_Dims(bo, od_contact_face, bolt_cir_dia):
         hgs  = uFormat(hg, ulen, flen)
 
         if (bo.Value(uin) > 0.250):
-            v1_str = f'  b = {bs} = sqrt({bo}) / 2'
+            v1_str = f'  b = {bs} = sqrt({bos}) / 2'
         else:
             v1_str = f'  b = {bs}'
 
