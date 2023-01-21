@@ -30,7 +30,7 @@ def TruncConeArea(bigRadius, smallRadius, height):
 #  diaStem     - the diameter of the stem below the lower corner of the seat
 #
 # Plugs can contact the seat on the lower corner, upper corner, or on the bevel.
-class SphPlug_BevelSeat:
+class SphericalPlug_BeveledSeat:
     def __init__(self, diaSeat, angSeat, htSeat, srPlug, diaFlatPlug, diaStem):
         self._diaSeat = diaSeat.SIValue
         self._angSeat = angSeat.SIValue
@@ -167,7 +167,7 @@ class SphPlug_BevelSeat:
 
 
 # Ball plug against a beveled seat.  All angles are taken from the axis of the parts (half angles)
-class BallPlug_BevSeat:
+class BallPlug_BeveledSeat:
     def __init__(self, diaSeat, angSeat, htSeat, diaBall):
         srPlug = diaBall / 2.0
         if (srPlug.SIValue == 0.0):
@@ -208,7 +208,7 @@ class BallPlug_BevSeat:
 
 
 # Ball plug against a square seat.  All angles are taken from the axis of the parts (half angles)
-class BallPlug_SqSeat:
+class BallPlug_SquareSeat:
     def __init__(self, diaSeat, diaBall = 0.0 * un.Length.inch, contactAngle = 0.0 * un.Angle.deg):
         self._diaSeat = diaSeat.SIValue
         self._srPlug  = diaBall.SIValue / 2.0
@@ -275,7 +275,7 @@ class BallPlug_SqSeat:
 
 # Calculate the flow area between a conical plug and square seat.
 # All angles are taken from the axis of the part (half angles)
-class ConePlug_SqSeat:
+class ConicalPlug_SquareSeat:
     def __init__(self, diaSeat, diaPlugTip, angPlug):
         self._diaSeat = diaSeat.SIValue
         self._diaPlugTip = diaPlugTip.SIValue
@@ -302,8 +302,6 @@ class ConePlug_SqSeat:
             xp = x3
             gap = math.sqrt(((self._x1 - x3) ** 2) + ((self._y1 - y3) ** 2))
             self._area_zone = 'plug tip to seat corner'
-            stroke_inch = stroke.Value(un.Length.inch)
-            # print (stroke_inch)
 
         areaTruncCone = math.pi * gap * (xs + xp)
 
@@ -321,6 +319,106 @@ class ConePlug_SqSeat:
     @property
     def ContactLocation(self):
         return 'seat corner'
+
+    @property
+    def AreaZone(self):
+        return self._area_zone
+
+    @property
+    def MaxArea(self):
+        return self._area_annular * un.Area.meterSq
+
+
+# Calculate the flow area between a conical plug and beveled seat.
+# All angles are taken from the axis of the part (half angles)
+class ConicalPlug_BeveledSeat:
+    def __init__(self, diaSeat, angSeat, htSeat, diaPlugTip, angPlug):
+        self._diaSeat = diaSeat.SIValue
+        self._angSeat = angSeat.SIValue
+        self._htSeat = htSeat.SIValue
+        self._diaPlugTip = diaPlugTip.SIValue
+        self._angPlug = angPlug.SIValue
+
+        # x1, y1 correspond to the lower corner of the seat
+        self._x1 = self._diaSeat / 2.0             
+        self._y1 = 0                                
+
+        # x2, y2 correspond to the upper corner of the seat
+        self._x2 = self._x1 + self._htSeat * math.tan(self._angSeat)
+        self._y2 = self._y1 + self._htSeat
+
+        if (self._angPlug > self._angSeat): # contact is at the upper corner of the seat.
+            self._xc = self._x2
+            self._yc = self._y2
+            self._contact_location = 'upper corner'
+        else: # contact is at the lower corner of the seat
+            self._xc = self._x1
+            self._yc = self._y1
+            self._contact_location = 'lower corner'
+
+        self._area_annular = math.pi / 4.0 * self._diaSeat ** 2
+    
+        
+    def FlowArea(self, stroke):
+        _stroke = stroke.SIValue
+        # x3, y3 correspond to the tip of the plug
+        x3 = self._diaPlugTip / 2.0
+        y3 = self._yc + _stroke - (self._xc - x3) / math.tan(self._angPlug)
+
+        # calculate area considering only lower seat corner
+        xs = self._x1
+        gap = _stroke * math.sin(self._angPlug)
+        xp = xs - gap * math.cos(self._angPlug)
+        area_zone_1 = 'plug surface to lower corner'
+        if (xp < x3): # cone is retracted past lower seat corner
+            xp = x3
+            gap = math.sqrt(((self._x1 - x3) ** 2) + ((self._y1 - y3) ** 2))
+            area_zone_1 = 'plug tip to lower seat corner'
+            # print (stroke_inch)
+        areaTruncCone_1 = math.pi * gap * (xs + xp)
+
+        # gap between plug tip and perpendicular to seat
+        dist = math.sqrt((x3 - self._x1) ** 2.0 + (y3 - self._y1) ** 2.0) # distance between plug tip and lower seat corner
+        gamma = math.atan((y3 - self._y1) / (x3 - self._x1))
+        beta = self._angSeat - gamma
+        gap = dist * math.cos(beta)
+        xs = x3 + gap * math.cos(self._angSeat)
+        xp = x3
+        ht = gap * math.sin(self._angSeat)
+        areaTruncCone_3 = TruncConeArea(xp, xs, ht)
+        area_zone_3 = 'plug corner to seat surface'
+
+        # calculate area considering only upper seat corner
+        xs = self._x2
+        xp = xs - gap * math.cos(self._angPlug)
+        area_zone_2 = 'plug surface to upper seat corner'
+        if (xp < x3): # cone is retracted past upper seat corner
+            xp = x3
+            gap = math.sqrt(((self._x2 - x3) ** 2) + ((self._y2 - y3) ** 2))
+            area_zone_2 = 'plug tip to upper seat corner'
+            # print (stroke_inch)
+        areaTruncCone_2 = math.pi * gap * (xs + xp)
+
+        area = min(areaTruncCone_1, areaTruncCone_2, areaTruncCone_3, self._area_annular)
+
+        if (area == areaTruncCone_1):
+            self._area_zone = area_zone_1
+        elif (area == areaTruncCone_2):
+            self._area_zone = area_zone_2
+        elif (area == areaTruncCone_3):
+            self._area_zone = area_zone_3
+        elif (area == self._area_annular):
+            self._area_zone = 'seat diameter'
+    
+        return area * un.Area.meterSq
+
+    @property
+    def ContactDia(self):
+        return (self._xc * 2.0) * un.Length.inch 
+
+    @property
+    def ContactLocation(self):
+        return self._contact_location
 
     @property
     def AreaZone(self):
