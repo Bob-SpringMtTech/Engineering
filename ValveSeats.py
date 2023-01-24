@@ -172,7 +172,7 @@ class LineSegment2d:
     def Length(self):
         return Point2d.Distance(self.p1, self.p2)
 
-    def IsWithin(self, pt): # assumes that pt lies on the line defined by the line segment
+    def ContainsPoint(self, pt): # assumes that pt lies on the line defined by the line segment
         mid = self.MidPoint
         dist = Point2d.Distance(pt, mid)
         if (dist < self.Length / 2.0):
@@ -226,25 +226,25 @@ class TwoCones:
         # point defined by the interesction of a line perpendicular to A passing thru B at pt1 and line A
         ptA_B1 = self.A.Line.Perpendicular(self.B.p1).Intersection(self.A.Line)
         perpA_thruB1 = LineSegment2d(self.B.p1, ptA_B1, f'{self.A.Name} - {self.B.p1.Name}')
-        if (self.A.IsWithin(ptA_B1)):
+        if (self.A.ContainsPoint(ptA_B1)):
             self._CalcArea(perpA_thruB1)
 
         # point defined by the interesction of a line perpendicular to A passing thru B at pt2 and line A
         ptA_B2 = self.A.Line.Perpendicular(self.B.p2).Intersection(self.A.Line)
         perpA_thruB2 = LineSegment2d(self.B.p2, ptA_B2, f'{self.A.Name} - {self.B.p2.Name}')
-        if (self.A.IsWithin(ptA_B2)):
+        if (self.A.ContainsPoint(ptA_B2)):
             self._CalcArea(perpA_thruB2)
 
         # point defined by the interesction of a line perpendicular to B passing thru A at pt1 and line B
         ptB_A1 = self.B.Line.Perpendicular(self.A.p1).Intersection(self.B.Line) 
         perpB_thruA1 = LineSegment2d(self.A.p1, ptB_A1, f'{self.B.Name} - {self.A.p1.Name}')
-        if (self.B.IsWithin(ptB_A1)):
+        if (self.B.ContainsPoint(ptB_A1)):
             self._CalcArea(perpB_thruA1)
 
         # point defined by the interesction of a line perpendicular to B passing thru A at pt2 and line B
         ptB_A2 = self.B.Line.Perpendicular(self.A.p2).Intersection(self.B.Line) 
         perpB_thruA2 = LineSegment2d(self.A.p2, ptB_A2, f'{self.B.Name} - {self.A.p2.Name}')
-        if (self.B.IsWithin(ptB_A2)):
+        if (self.B.ContainsPoint(ptB_A2)):
             self._CalcArea(perpB_thruA2)
 
         return self.area, self.zone
@@ -547,7 +547,7 @@ class ConicalPlug_SquareSeat:
         # next, look at the line segments going thru the seat corner perpendicular to the cone segment
         normalPt = self._plug_segment.Line.Perpendicular(self._seat).Intersection(self._plug_segment.Line)
         normalSegment = LineSegment2d(normalPt, self._seat, f'{self._plug_segment.Name} - {self._seat.Name}')
-        if (self._plug_segment.IsWithin(normalPt)):
+        if (self._plug_segment.ContainsPoint(normalPt)):
             normalArea = normalSegment.ConicalArea()
             if (normalArea < area):
                 area = normalArea
