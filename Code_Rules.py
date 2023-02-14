@@ -9,7 +9,8 @@
 #   t_act: actual thickness to be compared with calculated required thickness
 #   returns: required pipe wall thickness
 #
-# UG34_C_2_Eq1(d, P, S, C, E, t_act = (0.0 * uin))
+# Calculate the minimum required thickness of flat unstayed circular heads, covers and blind flanges with no edge monents
+# UG34_C_2_Eq1(d, P, S, C, E, t_act = (0.0 * uin)) 
 #   d: diameter, or short span, measured as indicated in VIII, Div 1 Fig. UG-34
 #   P: internal design pressure
 #   S: maximum allowable stress value in tension from applicable table of stress values referenced by VIII, Div 1 UG-23
@@ -40,6 +41,7 @@
 #   y: gasket or joint-contact-surface unit seating load, [see VIII, Div 1, App 2, Note 1, 2-5(c)]
 #   returns: Wm2 (minimum required bolt load for gasket seating [see VIII, Div 1, App 2, 2-5(c)])
 #
+# Calculate the minimum required thickness of flat unstayed circular heads, covers and blind flanges with edge monents
 # UG34_C_2_Eq2_Operating(d, P, S1, Wm1, hg, C, E)
 #   d: diameter, or short span, measured as indicated in VIII, Div 1 Fig. UG-34
 #   P: internal design pressure
@@ -378,7 +380,7 @@ def UG34_C_2_Eq2_Gasket(d, S2, W2, hg, E):
     return t
 
 def UG34_C_2_Eq2(d, P, S1, S2, W1, W2, hg, C, E, t_act = (0.0 * uin)):
-    # S1 and W1 dorrespond to the operating load case
+    # S1 and W1 correspond to the operating load case
     # S2 and W2 correspond to the gasket seating case
 
     if (verbose):
@@ -416,6 +418,42 @@ def UG34_C_2_Eq2(d, P, S1, S2, W1, W2, hg, C, E, t_act = (0.0 * uin)):
             print(f'  {status}')
 
     return t
+
+def AppII_Wm1_NonCircular(P, Ag_pressure, Ag_contact, m):
+
+    Wm1 = P * (Ag_pressure + Ag_contact * m * 2.0)
+    f_str = '  Wm1 = Ag_pressure * P + 2 * m * Ag_contact * P)   for non-circular flanges'
+
+    Wm1s = uFormat(Wm1, ufr, ffr)
+
+    if (verbose):
+        print(f_str)
+        sWm1 = uFormat(Wm1, ufr, ffr)
+        sP   = uFormat(P, upr, fpr)
+        sAgp = uFormat(Ag_pressure, uar, far)
+        sAgc = uFormat(Ag_contact, uar, far)
+        sm   = uFormat(m, uul, ful)
+
+        print(f'  Wm1 = {sWm1} = {sAgp} * {sP} + 2 * {sm} * {sAgc} * {sP})')
+
+    return Wm1
+
+def AppII_Wm2_NonCircular(Ag, y):
+
+    Wm2 = Ag * y 
+    f_str = '  Wm2 = Ag * y   for non-circular flanges'
+
+    if (verbose):
+        sWm2 = uFormat(Wm2, ufr, ffr)
+        sAg  = uFormat(Ag, uar, far)
+        sy = uFormat(y, upr, fpr)
+
+        print(f_str)
+        print(f'  Wm2 = {sWm2} = {sAg} * {sy}')
+
+    return Wm2
+
+
 
 def AppII_Bolting(S, Wm, bolt_thd, N):
     if (verbose):
@@ -560,6 +598,22 @@ def B16_34_Min_Wall_Thickness(Pc, dia, t_act = (0.0 * uin)):
 
     return t
 
+# Use this function to convert non-circular areas to diameters to be used in the B16_34 functions below.
+def B16_34_Ag_to_Dg(Ag):
+    if (verbose):
+        print(f'Calculate the diameter of a circle with area Ag')
+
+    Dg = (Ag * 4.0 / math.pi).sqrt()
+    f1_str = '  Dg = sqrt( Ag * 4.0 / pi'
+
+    if (verbose):
+        sDg = uFormat(Dg, ulen, flen)
+        sAg = uFormat(Ag, uar, far)
+
+        print(f1_str)
+        print(f'  {sDg} = sqrt( {sAg} * 4.0 / pi )')
+    
+    return Dg
 
 def B16_34_Bolted_Cover_Joint(Pc, Dg, bolt_thd, N, Sa):
     if (verbose):
