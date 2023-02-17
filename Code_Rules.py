@@ -419,10 +419,10 @@ def UG34_C_2_Eq2(d, P, S1, S2, W1, W2, hg, C, E, t_act = (0.0 * uin)):
 
     return t
 
-def AppII_Wm1_NonCircular(P, Ag_pressure, Ag_contact, m):
-
+def AppII_Wm1_NonCircular(P, G, Ag_contact, m):
+    Ag_pressure = G.squared() * math.pi / 4.0
     Wm1 = P * (Ag_pressure + Ag_contact * m * 2.0)
-    f_str = '  Wm1 = Ag_pressure * P + 2 * m * Ag_contact * P)   for non-circular flanges'
+    f_str = '  Wm1 = pi * G^2 / 4 * P + 2 * m * Ag_contact * P)   for non-circular flanges'
 
     Wm1s = uFormat(Wm1, ufr, ffr)
 
@@ -430,22 +430,22 @@ def AppII_Wm1_NonCircular(P, Ag_pressure, Ag_contact, m):
         print(f_str)
         sWm1 = uFormat(Wm1, ufr, ffr)
         sP   = uFormat(P, upr, fpr)
-        sAgp = uFormat(Ag_pressure, uar, far)
+        sG = uFormat(G, ulen, flen)
         sAgc = uFormat(Ag_contact, uar, far)
         sm   = uFormat(m, uul, ful)
 
-        print(f'  Wm1 = {sWm1} = {sAgp} * {sP} + 2 * {sm} * {sAgc} * {sP})')
+        print(f'  Wm1 = {sWm1} = pi * {sG}^2 / 4 * {sP} + 2 * {sm} * {sAgc} * {sP})')
 
     return Wm1
 
-def AppII_Wm2_NonCircular(Ag, y):
+def AppII_Wm2_NonCircular(Ag_contact, y):
 
-    Wm2 = Ag * y 
+    Wm2 = Ag_contact * y 
     f_str = '  Wm2 = Ag * y   for non-circular flanges'
 
     if (verbose):
         sWm2 = uFormat(Wm2, ufr, ffr)
-        sAg  = uFormat(Ag, uar, far)
+        sAg  = uFormat(Ag_contact, uar, far)
         sy = uFormat(y, upr, fpr)
 
         print(f_str)
@@ -480,12 +480,15 @@ def AppII_Bolting(S, Wm, bolt_thd, N):
         sS = uFormat(S, upr, fpr)
         sWm = uFormat(Wm, ufr, ffr)
         sbolt = f'{bolt_thd}'
+        stsa = uFormat(tsa, uar, far)
         sN = f'{N}'
         sa_reqd = uFormat(a_reqd, uar, far)
         sS_act = uFormat(S_act, upr, fpr)
         
         print(f1_str)
         print(f'  A reqd = {sa_reqd} = {sWm} / {sS}')               
+        print(f'  {sbolt} x {N} bolts')
+        print(f'  As = {stsa} per bolt')
         print(f2_str)
         print(f'  A act = {sa_act} = {stsa} * {sN}')
         print(f3_str)
@@ -620,11 +623,12 @@ def B16_34_Bolted_Cover_Joint(Pc, Dg, bolt_thd, N, Sa):
         print(f'Calculate required tensile stress area of the cover bolting and compare to actual, B16.34 para 6.4.1.1')
 
     f1_str = '  Ag = pi / 4 * Dg^2'
-    f2_str = '  As = Thread tensile area * N'
+    f2_str = '  Ab = Thread tensile area * N'
     f3_str = '  Pc * Ag / Ab <= K1 * Sa <= 9000'
     
     Ag = Dg.squared() * math.pi / 4.0
-    Ab = bolt_thd.TensileArea() * usqin * N
+    As = bolt_thd.TensileArea() * usqin
+    Ab = As * N
     
     S_act = Pc * Ag / Ab
     S_lim = 9000.0 * upsi
@@ -642,6 +646,7 @@ def B16_34_Bolted_Cover_Joint(Pc, Dg, bolt_thd, N, Sa):
         sDg = uFormat(Dg, ulen, flen)
         sAg = uFormat(Ag, uar, far)
         sthd = f'{bolt_thd}'
+        sAs = uFormat(As, uar, far)
         sAb = uFormat(Ab, uar, far)
         sSa = uFormat(Sa, upr, fpr)
         sS_act = uFormat(S_act, upr, fpr)
@@ -649,7 +654,8 @@ def B16_34_Bolted_Cover_Joint(Pc, Dg, bolt_thd, N, Sa):
         print(f1_str)
         print(f'  Ag = {sAg} = pi / 4 * ({sDg})^2')
         print(f2_str)
-        print(f'  {sthd} x {N} bolts')
+        print(f'  {sthd} x {N} bolting')
+        print(f'  As = {sAs} tensile stress area per bolt')
         print(f'  Ab = {sAb}')
         print(f3_str)
         print(f'  {sPc} * {sAg} / {sAb}  = {sS_act} <= 0.45 * {sSa} <= 9000')
@@ -791,7 +797,6 @@ def B16_34_Threaded_Body_Joint(Pc, Dg, cover_thd, LE):
         print(f'  {sPc} * {sAg} / {sAs} = {sS_act} <= 3300')
         print(f'  {status}\n')
 
-
     return S_act   
 
 def Wm2_Flat_Face(od, id, hd, N, y):
@@ -816,6 +821,83 @@ def Wm2_Flat_Face(od, id, hd, N, y):
         print(f'  Ag = {sAg} = pi / 4 * (({sod})^2 - ({sid})^2 * N * ({shd}))')
         print(f2_str)
         print(f'  Wm2 = {Wm2} = {sAg} * {sy}')
+
+    return Wm2
+
+# Taken from Taylor Forge Bulletin No. 45 "Design of Flanges for Full Face Gaskets"
+def TFFullFace_Dims(od, id, bc): 
+    if (verbose):
+        print(f"Calculate flange gasket dimensions G (diameter of gasket load reaction), hg and h'g (bolt load moment arms, inside and outside b.c.),")
+        print(f"and b (effective sealing width) per Taylor Forge Bulletin #45 for full face gaskets")
+
+    b = (bc - id) / 4.0
+    hg_i = (bc - id) * (bc + id * 2.0) / (bc + id) / 6.0
+    hg_o = (od - bc) * (od * 2.0 + bc) / (od + bc) / 6.0
+    G = bc - hg_i * 2.0
+
+    f1_str = '  b = (bc - id) / 4'
+    f2_str = '  hg = (bc - id) * (bc + 2*id) / (6 * (bc + id))'
+    f3_str = "  h'g = (od - bc) * (bc + 2*od) / (6 * (bc + od))"
+    f4_str = '  G = bc - 2 * hg'
+
+    if (verbose):
+        sod  = uFormat(od, ulen, flen)
+        sid  = uFormat(id, ulen, flen)
+        sbc  = uFormat(bc, ulen, flen)
+        sb   = uFormat(b, ulen, flen)
+        shgi = uFormat(hg_i, ulen, flen)
+        shgo = uFormat(hg_o, ulen, flen)
+        sG   = uFormat(G, ulen, flen)
+
+        print (f'  od = {sod}')
+        print (f'  id = {sid}')
+        print (f'  b.c. = {sbc}\n')
+
+        print(f1_str)
+        print(f'  {sb} = ({sbc} - {sid}) / 4')
+        print(f2_str)
+        print(f'  {shgi} = ({sbc} - {sid}) * ({sbc} + 2*{sid}) / (6 * ({sbc} + {sid}))')
+        print(f3_str)
+        print(f'  {shgo} = ({sod} - {sbc}) * ({sbc} + 2*{sod}) / (6 * ({sbc} + {sod}))')
+        print(f4_str)
+        print(f'  {sG} = {sbc} - 2 * {shgi}')
+
+    return G, hg_i, hg_o, b
+    
+# Taken from Taylor Forge Bulletin No. 45 "Design of Flanges for Full ace Gaskets"
+def TFFullFace_Wm1(P, G, b, m, hg_i, hg_o):
+
+    Wm1 = ((G.squared() / 4.0) + ((hg_i / hg_o + 1.0 * uul) * b * G * m)) * (P * math.pi)
+    f_str = "  Wm1 = pi * P * (G^2 / 4 + (1 + hg / h'g) * b * G * m)"
+
+    if (verbose):
+        print(f_str)
+        sWm1 = uFormat(Wm1, ufr, ffr)
+        sP   = uFormat(P, upr, fpr)
+        sG   = uFormat(G, ulen, flen)
+        sb   = uFormat(b, ulen, flen)
+        sm   = uFormat(m, uul, ful)
+        shgi = uFormat(hg_i, ulen, flen)
+        shgo = uFormat(hg_o, ulen, flen)
+
+        print(f'  {sWm1} = pi * {sP} * (({sG})^2 / 4 + (1 + {shgi} / {shgo}) * {sb} * {sG} * {sm})')
+
+    return Wm1
+
+# Taken from Taylor Forge Bulletin No. 45 "Design of Flanges for Full ace Gaskets"
+def TFFullFace_Wm2(G, b, y):
+
+    Wm2 = b * G * y * math.pi
+    f_str = '  Wm2 = pi * b * G * y'
+
+    sWm2 = uFormat(Wm2, ufr, ffr)
+    sb   = uFormat(b, ulen, flen)
+    sG   = uFormat(G, ulen, flen)
+    sy   = uFormat(y, upr, fpr)
+
+    if (verbose):
+        print(f_str)
+        print(f'  Wm2 = {sWm2} = pi * {sb} * {sG} * {sy}')
 
     return Wm2
 
