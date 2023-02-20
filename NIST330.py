@@ -39,6 +39,7 @@ class Area:
     #                   'kg', 'm', 's', 'A', 'K', 'mol', 'cd', '$'
     _dim = um.Dimension([0,    2,   0,   0,   0,   0,     0,    0])
     meterSq = um.Unit('m^2', _dim, 1.0)
+    mmSq = um.Unit('mm^2', _dim, 0.001 ** 2)
     acre = um.Unit('acre', _dim, 4046.87260987)
     are = um.Unit('a', _dim, 100.0)
     barn = um.Unit('b', _dim, 1.0E-28)
