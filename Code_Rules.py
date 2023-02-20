@@ -419,42 +419,6 @@ def UG34_C_2_Eq2(d, P, S1, S2, W1, W2, hg, C, E, t_act = (0.0 * uin)):
 
     return t
 
-def AppII_Wm1_NonCircular(P, G, Ag_contact, m):
-    Ag_pressure = G.squared() * math.pi / 4.0
-    Wm1 = P * (Ag_pressure + Ag_contact * m * 2.0)
-    f_str = '  Wm1 = pi * G^2 / 4 * P + 2 * m * Ag_contact * P)   for non-circular flanges'
-
-    Wm1s = uFormat(Wm1, ufr, ffr)
-
-    if (verbose):
-        print(f_str)
-        sWm1 = uFormat(Wm1, ufr, ffr)
-        sP   = uFormat(P, upr, fpr)
-        sG = uFormat(G, ulen, flen)
-        sAgc = uFormat(Ag_contact, uar, far)
-        sm   = uFormat(m, uul, ful)
-
-        print(f'  Wm1 = {sWm1} = pi * {sG}^2 / 4 * {sP} + 2 * {sm} * {sAgc} * {sP})')
-
-    return Wm1
-
-def AppII_Wm2_NonCircular(Ag_contact, y):
-
-    Wm2 = Ag_contact * y 
-    f_str = '  Wm2 = Ag * y   for non-circular flanges'
-
-    if (verbose):
-        sWm2 = uFormat(Wm2, ufr, ffr)
-        sAg  = uFormat(Ag_contact, uar, far)
-        sy = uFormat(y, upr, fpr)
-
-        print(f_str)
-        print(f'  Wm2 = {sWm2} = {sAg} * {sy}')
-
-    return Wm2
-
-
-
 def AppII_Bolting(S, Wm, bolt_thd, N):
     if (verbose):
         print(f'Calculate required bolting area and compare to actual, Sec VIII, Div 1, Appendix II para 2-3')
@@ -462,7 +426,12 @@ def AppII_Bolting(S, Wm, bolt_thd, N):
     f1_str = '  A reqd = Wm / S'
     a_reqd = Wm / S
 
-    tsa = bolt_thd.TensileArea() * usqin
+    metric_bolt = (f'{bolt_thd}'[0] == 'M')
+    if metric_bolt:
+        tsa_units = un.Area.mmSq
+    else:
+        tsa_units = usqin
+    tsa = bolt_thd.TensileArea() * tsa_units
     a_act = tsa * N
     f2_str = '  A act = Thread Tensile Area * N'
 
@@ -627,7 +596,13 @@ def B16_34_Bolted_Cover_Joint(Pc, Dg, bolt_thd, N, Sa):
     f3_str = '  Pc * Ag / Ab <= K1 * Sa <= 9000'
     
     Ag = Dg.squared() * math.pi / 4.0
-    As = bolt_thd.TensileArea() * usqin
+
+    metric_bolt = (f'{bolt_thd}'[0] == 'M')
+    if metric_bolt:
+        tsa_units = un.Area.mmSq
+    else:
+        tsa_units = usqin
+    As = bolt_thd.TensileArea() * tsa_units
     Ab = As * N
     
     S_act = Pc * Ag / Ab
@@ -673,13 +648,22 @@ def B16_34_Threaded_Cover_Joint(Pc, Dg, cover_thd, LE):
     f3_str = '  Pc * Ag / As <= 4200'
     
     Ag = Dg.squared() * math.pi / 4.0
-    cover_thd.LE = LE.Value(uin)
-    Asi = cover_thd.ShearAreaInternal()
-    Asx = cover_thd.ShearAreaExternal()
-    if (Asi < Asx):
-        As = Asi * usqin
+
+    metric_bolt = (f'{cover_thd}'[0] == 'M')
+    if metric_bolt:
+        bolt_thd = Threads.ThreadM(cover_thd.Size, cover_thd.Pitch, '6g')
+        LE_mm = LE.Value(un.Length.mm)
+        Asi = Threads.ThreadM.ShearAreaInternal(bolt_thd, cover_thd, LE_mm) * un.Area.mmSq
+        Asx = Threads.ThreadM.ShearAreaExternal(bolt_thd, cover_thd, LE_mm) * un.Area.mmSq
     else:
-        As = Asx * usqin
+        cover_thd.LE = LE.Value(uin)
+        Asi = cover_thd.ShearAreaInternal() * usqin
+        Asx = cover_thd.ShearAreaExternal() * usqin
+
+    if (Asi < Asx):
+        As = Asi
+    else:
+        As = Asx
 
     S_act = Pc * Ag / As
     S_lim = 4200.0 * upsi
@@ -720,7 +704,12 @@ def B16_34_Bolted_Body_Joint(Pc, Dg, bolt_thd, N, Sa):
     f3_str = '  Pc * Ag / Ab <= K2 * Sa <= 7000'
     
     Ag = Dg.squared() * math.pi / 4.0
-    Ab = bolt_thd.TensileArea() * usqin * N
+    metric_bolt = (f'{bolt_thd}'[0] == 'M')
+    if metric_bolt:
+        tsa_units = un.Area.mmSq
+    else:
+        tsa_units = usqin
+    Ab = bolt_thd.TensileArea() * tsa_units * N
     
     S_act = Pc * Ag / Ab
     S_lim = 7000.0 * upsi
@@ -763,13 +752,22 @@ def B16_34_Threaded_Body_Joint(Pc, Dg, cover_thd, LE):
     f3_str = '  Pc * Ag / As <= 3300'
     
     Ag = Dg.squared() * math.pi / 4.0
-    cover_thd.LE = LE.Value(uin)
-    Asi = cover_thd.ShearAreaInternal()
-    Asx = cover_thd.ShearAreaExternal()
-    if (Asi < Asx):
-        As = Asi * usqin
+
+    metric_bolt = (f'{cover_thd}'[0] == 'M')
+    if metric_bolt:
+        bolt_thd = Threads.ThreadM(cover_thd.Size, cover_thd.Pitch, '6g')
+        LE_mm = LE.Value(un.Length.mm)
+        Asi = Threads.ThreadM.ShearAreaInternal(bolt_thd, cover_thd, LE_mm) * un.Area.mmSq
+        Asx = Threads.ThreadM.ShearAreaExternal(bolt_thd, cover_thd, LE_mm) * un.Area.mmSq
     else:
-        As = Asx * usqin
+        cover_thd.LE = LE.Value(uin)
+        Asi = cover_thd.ShearAreaInternal() * usqin
+        Asx = cover_thd.ShearAreaExternal() * usqin
+
+    if (Asi < Asx):
+        As = Asi
+    else:
+        As = Asx
 
     S_act = Pc * Ag / As
     S_lim = 3300.0 * upsi
