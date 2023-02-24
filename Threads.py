@@ -148,6 +148,14 @@ class ThreadUN:
         return f'{self._d:0.3f}-{self.TPI:0.1f} {self._series} - {self.Class}'
 
     @property
+    def Desc_Ext(self):
+        return f'{self._d:0.3f}-{self.TPI:0.1f} {self._series} - {self.Class}A'
+
+    @property
+    def Desc_Int(self):
+        return f'{self._d:0.3f}-{self.TPI:0.1f} {self._series} - {self.Class}B'
+
+    @property
     def IncludedAngle(self):
         return (self._angle * 2.0)
 
@@ -456,7 +464,7 @@ class ThreadM:
 
         return ThreadM.coarse_pitch_list[loc]
 
-    def __init__(self, size, pitch, tol_class): 
+    def __init__(self, size, pitch = 0, ext_tol_class = '6g', int_tol_class = '6H'): 
         # dia_tol refers to major diameter tolerance for external threads
         #  and minor diameter tolerance for internal threads
         self._angle = 30
@@ -466,15 +474,18 @@ class ThreadM:
         else:
             self._P = ThreadM.CoarsePitch(self._d)
 
-        if (len(tol_class) == 2):
-            self._pd_class = tol_class
-            self._dia_class = tol_class
-        elif (len(tol_class) == 4):
-            self._pd_class = tol_class[0:2]
-            self._dia_class = tol_class[2:4]
-        self._int_ext = 'ext'
-        if (tol_class.find('G') > -1 or tol_class.find('H') > -1):
-            self._int_ext = 'int'
+        if (len(ext_tol_class) == 2):
+            self._ext_pd_class = ext_tol_class
+            self._ext_dia_class = ext_tol_class
+        elif (len(ext_tol_class) == 4):
+            self._ext_pd_class = ext_tol_class[0:2]
+            self._ext_dia_class = ext_tol_class[2:4]
+        if (len(int_tol_class) == 2):
+            self._int_pd_class = int_tol_class
+            self._int_dia_class = int_tol_class
+        elif (len(int_tol_class) == 4):
+            self._int_pd_class = int_tol_class[0:2]
+            self._int_dia_class = int_tol_class[2:4]
         self._le = ThreadM.thread_engagement_normal(size, pitch)
         self._le_cat = 'N' # can be 'S' (short), 'N' (normal), or 'L' (long)
         self.__calculate_basic()
@@ -517,46 +528,52 @@ class ThreadM:
 
     def __calculate_limits(self):
 
-        if (self._int_ext == 'int'):
-            # calculate pitch diameters
-            EI  = ThreadM.fundamental_deviation(self._P, self._pd_class) / 1000.0
-            tol = ThreadM.TD2(self.Size, self._P, self._pd_class) / 1000.0
-            self._D2_min = self._D2 + EI
-            self._D2_max = self._D2_min + tol
-            # major
-            self._D_min = self._D + EI
-            self._D_max = self._D2_max + self._H * 11.0 / 12.0 # Machinery's Handbook
+        # calculate pitch diameters
+        EI  = ThreadM.fundamental_deviation(self._P, self._int_pd_class) / 1000.0
+        tol = ThreadM.TD2(self.Size, self._P, self._int_pd_class) / 1000.0
+        self._D2_min = self._D2 + EI
+        self._D2_max = self._D2_min + tol
+        # major
+        self._D_min = self._D + EI
+        self._D_max = self._D2_max + self._H * 11.0 / 12.0 # Machinery's Handbook
 
-            # calculate minor diameters
-            EI = ThreadM.fundamental_deviation(self._P, self._dia_class) / 1000.0
-            tol = ThreadM.TD1(self._P, self._dia_class) / 1000.0
-            self._D1_min = self._D1 + EI
-            self._D1_max = self._D1 + tol
+        # calculate minor diameters
+        EI = ThreadM.fundamental_deviation(self._P, self._int_dia_class) / 1000.0
+        tol = ThreadM.TD1(self._P, self._int_dia_class) / 1000.0
+        self._D1_min = self._D1 + EI
+        self._D1_max = self._D1 + tol
 
-        if (self._int_ext == 'ext'):
-            # calculate pitch diameters
-            es  = ThreadM.fundamental_deviation(self._P, self._pd_class) / 1000.0 # negative values for external threads
-            tol = ThreadM.Td2(self.Size, self._P, self._pd_class) / 1000.0
-            self._d2_min = self._d2 + es
-            self._d2_max = self._d2_min - tol
+        # calculate pitch diameters
+        es  = ThreadM.fundamental_deviation(self._P, self._int_pd_class) / 1000.0 # negative values for external threads
+        tol = ThreadM.Td2(self.Size, self._P, self._ext_pd_class) / 1000.0
+        self._d2_min = self._d2 + es
+        self._d2_max = self._d2_min - tol
 
-            # calculate minor diameters per ISO 965-1, section 11
-            r_min = self._P / 8.0
-            c_max = self._H / 4.0 - r_min * (1.0 - math.cos(math.pi / 3.0 - math.acos(1.0 - tol / 4.0 / r_min))) + tol / 2.0
-            c_min = self._P / 8.0
-            self._d3_min = self._d2 - self._H - tol + es + 2 * c_min
-            self._d3_max = self._d2 - self._H - tol + es + 2 * c_max
+        # calculate minor diameters per ISO 965-1, section 11
+        r_min = self._P / 8.0
+        c_max = self._H / 4.0 - r_min * (1.0 - math.cos(math.pi / 3.0 - math.acos(1.0 - tol / 4.0 / r_min))) + tol / 2.0
+        c_min = self._P / 8.0
+        self._d3_min = self._d2 - self._H - tol + es + 2 * c_min
+        self._d3_max = self._d2 - self._H - tol + es + 2 * c_max
 
-            # calculate major diameter
-            es = ThreadM.fundamental_deviation(self._P, self._dia_class) / 1000.0 # negative values for external threads
-            tol = ThreadM.Td(self._P, self._dia_class) / 1000.0
-            self._d_max = self._d + es
-            self._d_min = self._d_max - tol
+        # calculate major diameter
+        es = ThreadM.fundamental_deviation(self._P, self._ext_dia_class) / 1000.0 # negative values for external threads
+        tol = ThreadM.Td(self._P, self._ext_dia_class) / 1000.0
+        self._d_max = self._d + es
+        self._d_min = self._d_max - tol
  
         return self
 
     def __str__(self):
-        return f'{self._d:0.3f} x {self._P:0.2f} - {self.Class}'
+        return f'M{self._d:0.3f} x {self._P:0.2f} - {self.ExtClass}/{self.IntClass}'
+
+    @property
+    def Desc_Ext(self):
+        return f'M{self._d:0.3f} x {self._P:0.2f} - {self.ExtClass}'
+
+    @property
+    def Desc_Int(self):
+        return f'M{self._d:0.3f} x {self._P:0.2f} - {self.IntClass}'
 
     @property
     def IncludedAngle(self):
@@ -575,50 +592,60 @@ class ThreadM:
         return self._P
 
     @property
-    def Class(self):
-        if (self._pd_class == self._dia_class):
-            return f'{self._pd_class}'
+    def ExtClass(self):
+        if (self._ext_pd_class == self._ext_dia_class):
+            return f'{self._ext_pd_class}'
         else:
-            return f'{self._pd_class}{self._dia_class}'
+            return f'{self._ext_pd_class}{self._ext_dia_class}'
+
+    @property
+    def IntClass(self):
+        if (self._int_pd_class == self._int_dia_class):
+            return f'{self._int_pd_class}'
+        else:
+            return f'{self._int_pd_class}{self._int_dia_class}'
 
     @property
     def LE(self):
-        return self._LE
+        return self._le
 
     @LE.setter
     def LE(self, le):
-        self._LE = le
+        self._le = le
         return self
 
     def BasicDims(self):
         return f'major Φ: {self._d:0.4f}  pitch Φ: {self._d2:0.4f}  minor Φ: {self._d1:0.4f}  pitch: {self._P:0.4f}  hn: {self._hn:0.4f}  tsa: {self.TensileArea():0.5f}'
 
-    def Major_Diameter(self):
+    def Major_Diameter_External(self):
         digits = 3
-        if (self._int_ext == 'ext'):
-            nom = (self._d_max + self._d_min) / 2.0
-            return [round(self._d_max, digits), round(nom, digits), round(self._d_min, digits)]
-        else: # 'int'
-            nom = (self._D_max + self._D_min) / 2.0
-            return [round(self._D_max, digits), round(nom, digits), round(self._D_min, digits)]
+        nom = (self._d_max + self._d_min) / 2.0
+        return [round(self._d_max, digits), round(nom, digits), round(self._d_min, digits)]
 
-    def Pitch_Diameter(self):
+    def Pitch_Diameter_External(self):
         digits = 3
-        if (self._int_ext == 'ext'):
-            nom = (self._d2_max + self._d2_min) / 2.0
-            return [round(self._d2_max, digits), round(nom, digits), round(self._d2_min,digits)]
-        else: # 'int'
-            nom = (self._D2_max + self._D2_min) / 2.0
-            return [round(self._D2_max, digits), round(nom, digits), round(self._D2_min, digits)]
+        nom = (self._d2_max + self._d2_min) / 2.0
+        return [round(self._d2_max, digits), round(nom, digits), round(self._d2_min,digits)]
 
-    def Minor_Diameter(self):
+    def Minor_Diameter_External(self):
         digits = 3
-        if (self._int_ext == 'ext'):
-            nom = (self._d3_max + self._d3_min) / 2.0
-            return [round(self._d3_max, digits), round(nom, digits), round(self._d3_min, digits)]
-        else: # 'int'
-            nom = (self._D1_max + self._D1_min) / 2.0
-            return [round(self._D1_max, digits), round(nom, digits), round(self._D1_min, digits)]
+        nom = (self._d3_max + self._d3_min) / 2.0
+        return [round(self._d3_max, digits), round(nom, digits), round(self._d3_min, digits)]
+
+    def Major_Diameter_Internal(self):
+        digits = 3
+        nom = (self._D_max + self._D_min) / 2.0
+        return [round(self._D_max, digits), round(nom, digits), round(self._D_min, digits)]
+
+    def Pitch_Diameter_Internal(self):
+        digits = 3
+        nom = (self._D2_max + self._D2_min) / 2.0
+        return [round(self._D2_max, digits), round(nom, digits), round(self._D2_min, digits)]
+
+    def Minor_Diameter_Internal(self):
+        digits = 3
+        nom = (self._D1_max + self._D1_min) / 2.0
+        return [round(self._D1_max, digits), round(nom, digits), round(self._D1_min, digits)]
 
     # Machinery's Handbook 25th Ed. "torque and Tension in fasteners" equation 11, p 1407
     def TensileArea(self, bore_dia=0.0):
@@ -628,19 +655,19 @@ class ThreadM:
         return tsa - ba
 
     # ASME B1.1-2003 Appendix B, Section B2
-    def ShearAreaInternal(mBolt, mNut, LE):
-        min_maj_dia = min(mBolt.Major_Diameter())
-        max_pitch_dia = max(mNut.Pitch_Diameter())
+    def ShearAreaInternal(self):
+        min_maj_dia = min(self.Major_Diameter_External())
+        max_pitch_dia = max(self.Pitch_Diameter_Internal())
         
-        partA = math.pi * LE * min_maj_dia / mBolt.Pitch
-        partB = mBolt.Pitch / 2.0 + 2.0 / 3.0 * math.cos(math.radians(mBolt.HalfAngle))*(min_maj_dia - max_pitch_dia)
+        partA = math.pi * self.LE * min_maj_dia / self.Pitch
+        partB = self.Pitch / 2.0 + 2.0 / 3.0 * math.cos(math.radians(self.HalfAngle))*(min_maj_dia - max_pitch_dia)
         return partA * partB
 
     # ASME B1.1-2003 Appendix B, Section B2
-    def ShearAreaExternal(mBolt, mNut, LE):
-        max_minor_dia = max(mNut.Minor_Diameter())
-        min_pitch_dia = min(mBolt.Pitch_Diameter())
+    def ShearAreaExternal(self):
+        max_minor_dia = max(self.Minor_Diameter_Internal())
+        min_pitch_dia = min(self.Pitch_Diameter_External())
 
-        partA = math.pi * LE * max_minor_dia / mBolt.Pitch
-        partB = mBolt.Pitch / 2.0 + 2.0 / 3.0 * math.cos(math.radians(mBolt.HalfAngle))*(min_pitch_dia - max_minor_dia)
+        partA = math.pi * self.LE * max_minor_dia / self.Pitch
+        partB = self.Pitch / 2.0 + 2.0 / 3.0 * math.cos(math.radians(self.HalfAngle))*(min_pitch_dia - max_minor_dia)
         return partA * partB

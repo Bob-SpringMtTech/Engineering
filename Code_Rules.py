@@ -226,7 +226,7 @@ def B31_3_Para304_1_2(P, D, d, c, S, E, W, t_act = (0.0 * uin)):
                     status = Test_Pass_Str
                     print(f'  t <= t act {st_act}')
                     print(f'  {st} <= {st_act}')
-                print(f'  {status}')
+                print(f'  {status}\n')
 
     return t
 
@@ -263,7 +263,7 @@ def UG34_C_2_Eq1(d, P, S, C, E, t_act = (0.0 * uin)):
                 status = Test_Pass_Str
                 print(f'  t <= t act {st_act}')
                 print(f'  {st} <= {st_act}')
-            print(f'  {status}')
+            print(f'  {status}\n')
 
 
     return t
@@ -321,7 +321,7 @@ def AppII_Wm1(P, G, b, m):
         sb   = uFormat(b, ulen, flen)
         sm   = uFormat(m, uul, ful)
 
-        print(f'  Wm1 = {sWm1} = pi * (({sG})^2 * {sP} / 4.0 + 2 * {sb} * {sG} * {sm} * {sP})')
+        print(f'  Wm1 = {sWm1} = pi * (({sG})^2 * {sP} / 4.0 + 2 * {sb} * {sG} * {sm} * {sP})\n')
 
     return Wm1
 
@@ -337,7 +337,7 @@ def AppII_Wm2(G, b, y):
 
     if (verbose):
         print(f_str)
-        print(f'  Wm2 = {sWm2} = pi * {sb} * {sG} * {sy}')
+        print(f'  Wm2 = {sWm2} = pi * {sb} * {sG} * {sy}\n')
 
     return Wm2
 
@@ -358,7 +358,7 @@ def UG34_C_2_Eq2_Operating(d, P, S1, W1, hg, C, E):
         sE = uFormat(E, uul, ful)
         sW = uFormat(W1, ufr, ffr)
         shg = uFormat(hg, ulen, flen)
-        print(f'  t1 = {st} = {sd} * sqrt( ({sC}* {sP}) / ({sS} * {sE}) + (1.9 * {sW} * {shg}) / ({sS} * {sE} * ({sd})^3) )')
+        print(f'  t1 = {st} = {sd} * sqrt( ({sC}* {sP}) / ({sS} * {sE}) + (1.9 * {sW} * {shg}) / ({sS} * {sE} * ({sd})^3) )\n')
 
     return t
 
@@ -375,7 +375,7 @@ def UG34_C_2_Eq2_Gasket(d, S2, W2, hg, E):
 
     if (verbose):
         print(f_str)
-        print(f'  t2 = {ts} = {ds} * sqrt( (1.9 * {Ws} * {hgs}) / ({Ss} * {Es} * ({ds})^3) )')
+        print(f'  t2 = {ts} = {ds} * sqrt( (1.9 * {Ws} * {hgs}) / ({Ss} * {Es} * ({ds})^3) )\n')
 
     return t
 
@@ -415,45 +415,9 @@ def UG34_C_2_Eq2(d, P, S1, S2, W1, W2, hg, C, E, t_act = (0.0 * uin)):
                 status = Test_Pass_Str
                 print(f'  t <= t act {st_act}')
                 print(f'  {st} <= {st_act}')
-            print(f'  {status}')
+            print(f'  {status}\n')
 
     return t
-
-def AppII_Wm1_NonCircular(P, G, Ag_contact, m):
-    Ag_pressure = G.squared() * math.pi / 4.0
-    Wm1 = P * (Ag_pressure + Ag_contact * m * 2.0)
-    f_str = '  Wm1 = pi * G^2 / 4 * P + 2 * m * Ag_contact * P)   for non-circular flanges'
-
-    Wm1s = uFormat(Wm1, ufr, ffr)
-
-    if (verbose):
-        print(f_str)
-        sWm1 = uFormat(Wm1, ufr, ffr)
-        sP   = uFormat(P, upr, fpr)
-        sG = uFormat(G, ulen, flen)
-        sAgc = uFormat(Ag_contact, uar, far)
-        sm   = uFormat(m, uul, ful)
-
-        print(f'  Wm1 = {sWm1} = pi * {sG}^2 / 4 * {sP} + 2 * {sm} * {sAgc} * {sP})')
-
-    return Wm1
-
-def AppII_Wm2_NonCircular(Ag_contact, y):
-
-    Wm2 = Ag_contact * y 
-    f_str = '  Wm2 = Ag * y   for non-circular flanges'
-
-    if (verbose):
-        sWm2 = uFormat(Wm2, ufr, ffr)
-        sAg  = uFormat(Ag_contact, uar, far)
-        sy = uFormat(y, upr, fpr)
-
-        print(f_str)
-        print(f'  Wm2 = {sWm2} = {sAg} * {sy}')
-
-    return Wm2
-
-
 
 def AppII_Bolting(S, Wm, bolt_thd, N):
     if (verbose):
@@ -462,7 +426,12 @@ def AppII_Bolting(S, Wm, bolt_thd, N):
     f1_str = '  A reqd = Wm / S'
     a_reqd = Wm / S
 
-    tsa = bolt_thd.TensileArea() * usqin
+    metric_bolt = (f'{bolt_thd}'[0] == 'M')
+    if metric_bolt:
+        tsa_units = un.Area.mmSq
+    else:
+        tsa_units = usqin
+    tsa = bolt_thd.TensileArea() * tsa_units
     a_act = tsa * N
     f2_str = '  A act = Thread Tensile Area * N'
 
@@ -479,8 +448,7 @@ def AppII_Bolting(S, Wm, bolt_thd, N):
         sa_act = uFormat(a_act, uar, far)
         sS = uFormat(S, upr, fpr)
         sWm = uFormat(Wm, ufr, ffr)
-        sbolt = f'{bolt_thd}'
-        stsa = uFormat(tsa, uar, far)
+        sbolt = f'{bolt_thd.Desc_Ext}'
         sN = f'{N}'
         sa_reqd = uFormat(a_reqd, uar, far)
         sS_act = uFormat(S_act, upr, fpr)
@@ -495,8 +463,95 @@ def AppII_Bolting(S, Wm, bolt_thd, N):
         print(f'  S act = {sS_act} = {sWm} / {sa_act}')
         print(f'  {status}\n')
 
-
     return S_act
+
+
+def Thread_Shear_Check(Wm, S_bolt, S_body, thread, N, LE):
+    if (verbose):
+        print(f'Calculate required thread shear area and compare to actual')
+        print(f'  External threads:')
+
+    f1_str = '  A reqd = Wm / S'
+    a_reqd = Wm / S_bolt
+
+    metric_bolt = (f'{thread}'[0] == 'M')
+    if metric_bolt:
+        ssa_units = un.Area.mmSq
+        len_units = un.Length.mm
+    else:
+        ssa_units = usqin
+        len_units = uin
+    thread.LE = LE.Value(len_units)
+    ssa = thread.ShearAreaExternal() * ssa_units
+    a_act = ssa * N
+    f2_str = '  A act = Thread Shear Area * N'
+
+    if (a_reqd > a_act):
+        status = Test_Fail_Str
+    else:
+        status = Test_Pass_Str
+
+    S_act = Wm / a_act
+    f3_str = '  S act = Wm / a act'
+
+    if (verbose):
+        sssa = uFormat(ssa, uar, far)
+        sa_act = uFormat(a_act, uar, far)
+        sS = uFormat(S_bolt, upr, fpr)
+        sWm = uFormat(Wm, ufr, ffr)
+        sbolt = f'{thread.Desc_Ext}'
+        sN = f'{N}'
+        sa_reqd = uFormat(a_reqd, uar, far)
+        sS_act = uFormat(S_act, upr, fpr)
+        
+        print(f1_str)
+        print(f'  A reqd = {sa_reqd} = {sWm} / {sS}')               
+        print(f'  {sbolt} x {N} bolts')
+        print(f'  As = {sssa} per bolt')
+        print(f2_str)
+        print(f'  A act = {sa_act} = {sssa} * {sN}')
+        print(f3_str)
+        print(f'  S act = {sS_act} = {sWm} / {sa_act}')
+        print(f'  {status}\n')
+
+
+    if (verbose):
+        print(f'  Internal threads:')
+
+    f1_str = '  A reqd = Wm / S'
+    a_reqd = Wm / S_body
+
+    ssa = thread.ShearAreaInternal() * ssa_units
+    a_act = ssa * N
+    f2_str = '  A act = Thread Shear Area * N'
+
+    if (a_reqd > a_act):
+        status = Test_Fail_Str
+    else:
+        status = Test_Pass_Str
+
+    S_act = Wm / a_act
+    f3_str = '  S act = Wm / a act'
+
+    if (verbose):
+        sssa = uFormat(ssa, uar, far)
+        sa_act = uFormat(a_act, uar, far)
+        sS = uFormat(S_body, upr, fpr)
+        sWm = uFormat(Wm, ufr, ffr)
+        sbody = f'{thread.Desc_Int}'
+        sN = f'{N}'
+        sa_reqd = uFormat(a_reqd, uar, far)
+        sS_act = uFormat(S_act, upr, fpr)
+        
+        print(f1_str)
+        print(f'  A reqd = {sa_reqd} = {sWm} / {sS}')               
+        print(f'  {sbody} x {N} bolts')
+        print(f'  As = {sssa} per bolt')
+        print(f2_str)
+        print(f'  A act = {sa_act} = {sssa} * {sN}')
+        print(f3_str)
+        print(f'  S act = {sS_act} = {sWm} / {sa_act}')
+        print(f'  {status}\n')
 
 
 def B16_34_Min_Wall_Thickness(Pc, dia, t_act = (0.0 * uin)):
@@ -627,7 +682,13 @@ def B16_34_Bolted_Cover_Joint(Pc, Dg, bolt_thd, N, Sa):
     f3_str = '  Pc * Ag / Ab <= K1 * Sa <= 9000'
     
     Ag = Dg.squared() * math.pi / 4.0
-    As = bolt_thd.TensileArea() * usqin
+
+    metric_bolt = (f'{bolt_thd}'[0] == 'M')
+    if metric_bolt:
+        tsa_units = un.Area.mmSq
+    else:
+        tsa_units = usqin
+    As = bolt_thd.TensileArea() * tsa_units
     Ab = As * N
     
     S_act = Pc * Ag / Ab
@@ -673,13 +734,22 @@ def B16_34_Threaded_Cover_Joint(Pc, Dg, cover_thd, LE):
     f3_str = '  Pc * Ag / As <= 4200'
     
     Ag = Dg.squared() * math.pi / 4.0
-    cover_thd.LE = LE.Value(uin)
-    Asi = cover_thd.ShearAreaInternal()
-    Asx = cover_thd.ShearAreaExternal()
-    if (Asi < Asx):
-        As = Asi * usqin
+
+    metric_bolt = (f'{cover_thd}'[0] == 'M')
+    if metric_bolt:
+        cover_thd.LE = LE.Value(un.Length.mm)
+        area_units = un.Area.mmSq
     else:
-        As = Asx * usqin
+        cover_thd.LE = LE.Value(uin)
+        area_units = usqin
+
+    Asi = cover_thd.ShearAreaInternal() * area_units
+    Asx = cover_thd.ShearAreaExternal() * area_units
+
+    if (Asi < Asx):
+        As = Asi
+    else:
+        As = Asx
 
     S_act = Pc * Ag / As
     S_lim = 4200.0 * upsi
@@ -720,7 +790,12 @@ def B16_34_Bolted_Body_Joint(Pc, Dg, bolt_thd, N, Sa):
     f3_str = '  Pc * Ag / Ab <= K2 * Sa <= 7000'
     
     Ag = Dg.squared() * math.pi / 4.0
-    Ab = bolt_thd.TensileArea() * usqin * N
+    metric_bolt = (f'{bolt_thd}'[0] == 'M')
+    if metric_bolt:
+        tsa_units = un.Area.mmSq
+    else:
+        tsa_units = usqin
+    Ab = bolt_thd.TensileArea() * tsa_units * N
     
     S_act = Pc * Ag / Ab
     S_lim = 7000.0 * upsi
@@ -763,13 +838,22 @@ def B16_34_Threaded_Body_Joint(Pc, Dg, cover_thd, LE):
     f3_str = '  Pc * Ag / As <= 3300'
     
     Ag = Dg.squared() * math.pi / 4.0
-    cover_thd.LE = LE.Value(uin)
-    Asi = cover_thd.ShearAreaInternal()
-    Asx = cover_thd.ShearAreaExternal()
-    if (Asi < Asx):
-        As = Asi * usqin
+
+    metric_bolt = (f'{cover_thd}'[0] == 'M')
+    if metric_bolt:
+        cover_thd.LE = LE.Value(un.Length.mm)
+        area_units = un.Area.mmSq
     else:
-        As = Asx * usqin
+        cover_thd.LE = LE.Value(uin)
+        area_units = usqin
+
+    Asi = cover_thd.ShearAreaInternal() * area_units
+    Asx = cover_thd.ShearAreaExternal() * area_units
+
+    if (Asi < Asx):
+        As = Asi
+    else:
+        As = Asx
 
     S_act = Pc * Ag / As
     S_lim = 3300.0 * upsi
@@ -798,31 +882,6 @@ def B16_34_Threaded_Body_Joint(Pc, Dg, cover_thd, LE):
         print(f'  {status}\n')
 
     return S_act   
-
-def Wm2_Flat_Face(od, id, hd, N, y):
-    if (verbose):
-        print(f'Calculate the gasket seating load for a flat face gasket using the Garlock Design Spreadsheet Formulas')
-
-    f1_str = '  Ag = pi / 4 * (od^2 - id^2 * N * hd)'
-    f2_str = '  Wm2 = Ag * y'
-
-    ag = (od.squared() - id.squared() - hd.squared() * N) * np.pi / 4.0
-    Wm2 = ag * y
-
-    if (verbose):
-        sAg  = uFormat(ag, uar, far)
-        sod  = uFormat(od, ulen, flen)
-        sid  = uFormat(id, ulen, flen)
-        shd  = uFormat(hd, ulen, flen)
-        sy   = uFormat(y, upr, fpr)
-        sWm2 = uFormat(Wm2, ufr, ffr)
-        
-        print(f1_str)
-        print(f'  Ag = {sAg} = pi / 4 * (({sod})^2 - ({sid})^2 * N * ({shd}))')
-        print(f2_str)
-        print(f'  Wm2 = {Wm2} = {sAg} * {sy}')
-
-    return Wm2
 
 # Taken from Taylor Forge Bulletin No. 45 "Design of Flanges for Full Face Gaskets"
 def TFFullFace_Dims(od, id, bc): 
@@ -867,8 +926,8 @@ def TFFullFace_Dims(od, id, bc):
 # Taken from Taylor Forge Bulletin No. 45 "Design of Flanges for Full ace Gaskets"
 def TFFullFace_Wm1(P, G, b, m, hg_i, hg_o):
 
-    Wm1 = ((G.squared() / 4.0) + ((hg_i / hg_o + 1.0 * uul) * b * G * m)) * (P * math.pi)
-    f_str = "  Wm1 = pi * P * (G^2 / 4 + (1 + hg / h'g) * b * G * m)"
+    Wm1 = ((G.squared() / 4.0) + ((hg_i / hg_o + 1.0 * uul) * b * G * m * 2.0)) * (P * math.pi)
+    f_str = "  Wm1 = pi * P * (G^2 / 4 + (1 + hg / h'g) 2 * * b * G * m)"
 
     if (verbose):
         print(f_str)
@@ -880,24 +939,26 @@ def TFFullFace_Wm1(P, G, b, m, hg_i, hg_o):
         shgi = uFormat(hg_i, ulen, flen)
         shgo = uFormat(hg_o, ulen, flen)
 
-        print(f'  {sWm1} = pi * {sP} * (({sG})^2 / 4 + (1 + {shgi} / {shgo}) * {sb} * {sG} * {sm})')
+        print(f'  {sWm1} = pi * {sP} * (({sG})^2 / 4 + (1 + {shgi} / {shgo}) * 2 * {sb} * {sG} * {sm})')
 
     return Wm1
 
 # Taken from Taylor Forge Bulletin No. 45 "Design of Flanges for Full ace Gaskets"
-def TFFullFace_Wm2(G, b, y):
+def TFFullFace_Wm2(G, b, y, hg_i, hg_o):
 
-    Wm2 = b * G * y * math.pi
-    f_str = '  Wm2 = pi * b * G * y'
-
-    sWm2 = uFormat(Wm2, ufr, ffr)
-    sb   = uFormat(b, ulen, flen)
-    sG   = uFormat(G, ulen, flen)
-    sy   = uFormat(y, upr, fpr)
+    Wm2 = b * G * y * (hg_i / hg_o + 1.0 * uul) * math.pi
+    f_str = "  Wm2 = pi * b * G * y * (1 + hg / h'g) "
 
     if (verbose):
+        sWm2 = uFormat(Wm2, ufr, ffr)
+        sb   = uFormat(b, ulen, flen)
+        sG   = uFormat(G, ulen, flen)
+        sy   = uFormat(y, upr, fpr)
+        shgi = uFormat(hg_i, ulen, flen)
+        shgo = uFormat(hg_o, ulen, flen)
+
         print(f_str)
-        print(f'  Wm2 = {sWm2} = pi * {sb} * {sG} * {sy}')
+        print(f'  Wm2 = {sWm2} = pi * {sb} * {sG} * {sy} * (1 + {shgi} / {shgo})')
 
     return Wm2
 
