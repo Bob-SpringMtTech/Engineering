@@ -689,6 +689,13 @@ def B16_34_Bolted_Cover_Joint(Pc, Dg, bolt_thd, N, Sa):
     else:
         tsa_units = usqin
     As = bolt_thd.TensileArea() * tsa_units
+
+    metric_bolt = (f'{bolt_thd}'[0] == 'M')
+    if metric_bolt:
+        tsa_units = un.Area.mmSq
+    else:
+        tsa_units = usqin
+    As = bolt_thd.TensileArea() * tsa_units
     Ab = As * N
     
     S_act = Pc * Ag / Ab
@@ -790,6 +797,12 @@ def B16_34_Bolted_Body_Joint(Pc, Dg, bolt_thd, N, Sa):
     f3_str = '  Pc * Ag / Ab <= K2 * Sa <= 7000'
     
     Ag = Dg.squared() * math.pi / 4.0
+    metric_bolt = (f'{bolt_thd}'[0] == 'M')
+    if metric_bolt:
+        tsa_units = un.Area.mmSq
+    else:
+        tsa_units = usqin
+    Ab = bolt_thd.TensileArea() * tsa_units * N
     metric_bolt = (f'{bolt_thd}'[0] == 'M')
     if metric_bolt:
         tsa_units = un.Area.mmSq

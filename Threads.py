@@ -565,6 +565,7 @@ class ThreadM:
         return self
 
     def __str__(self):
+<<<<<<< HEAD
         return f'M{self._d:0.3f} x {self._P:0.2f} - {self.ExtClass}/{self.IntClass}'
 
     @property
@@ -574,6 +575,9 @@ class ThreadM:
     @property
     def Desc_Int(self):
         return f'M{self._d:0.3f} x {self._P:0.2f} - {self.IntClass}'
+=======
+        return f'M{self._d:0.3f} x {self._P:0.2f} - {self.Class}'
+>>>>>>> 14977eba14f290e17ca20ff2cbd4864cde1bf01a
 
     @property
     def IncludedAngle(self):
