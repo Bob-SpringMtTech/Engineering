@@ -81,8 +81,8 @@ class Dimensionless:
     #                   'kg', 'm', 's', 'A', 'K', 'mol', 'cd', '$'
     _dim = um.Dimension([0,    0,   0,   0,   0,   0,     0,    0])
     none = um.Unit('', _dim, 1.0)
-    pct = um.Unit('%', _dim, 100.0)
-    ppm = um.Unit('ppm', _dim, 1000000.0)
+    pct = um.Unit('%', _dim, 0.01)
+    ppm = um.Unit('ppm', _dim, 0.000001)
 
 class Energy:
    #                    'kg', 'm', 's', 'A', 'K', 'mol', 'cd', '$'

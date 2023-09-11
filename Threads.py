@@ -239,6 +239,15 @@ class ThreadUN:
         partA = math.pi * self._LE * self._D1_max / self._P
         partB = self._P / 2.0 + 2.0 / 3.0 * math.cos(math.radians(self._angle))*(self._d2_min - self._D1_max)
         return partA * partB
+    
+    def TapDrillSize_Cutting(self, PctThread = 75.0):
+        drill = self._D - self._P * PctThread / 76.98
+        return drill
+
+    def TapDrillSize_Forming(self, PctThread = 75.0):
+        drill = self._D - self._P * PctThread/ 294.12
+        return drill
+
 
 class ThreadM: 
     # values are returned in millimeters or square millimeters, as appropriate    
@@ -671,3 +680,12 @@ class ThreadM:
         partA = math.pi * self.LE * max_minor_dia / self.Pitch
         partB = self.Pitch / 2.0 + 2.0 / 3.0 * math.cos(math.radians(self.HalfAngle))*(min_pitch_dia - max_minor_dia)
         return partA * partB
+    
+    def TapDrillSize_Cutting(self, PctThread = 75.0):
+        drill = self.Size - self.Pitch * PctThread / 76.98
+        return drill
+
+    def TapDrillSize_Forming(self, PctThread = 75.0):
+        drill = self.Size - self.Pitch * PctThread / 294.12
+        return drill
+

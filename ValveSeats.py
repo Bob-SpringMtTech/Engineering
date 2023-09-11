@@ -33,17 +33,19 @@ class Point2d:
         return math.sqrt(dx ** 2 + dy ** 2)
 
     def Shift(self, dx = math.nan, dy = math.nan):
+        new_x = self.x
+        new_y = self.y
         goodData = (0 if math.isnan(dx) else 2) + (0 if math.isnan(dy) else 1)
         if (goodData == 0):
             raise Exception("must specify either 'dx' or 'dy'")
         elif (goodData == 1): # dy was specified, dx was not
-            self.y += dy
+            new_y += dy
         elif (goodData == 2): # dx was specified, dy was not
-            self.x += dx
+            new_x += dx
         else: # both x1 and y1 were specified
             raise Exception("must not specify both 'dx' and 'dy'")
         
-        return self
+        return Point2d(new_x, new_y, self.name)
 
 class Line2d:
     def __init__(self, m, b, name = None):
@@ -109,13 +111,13 @@ class Line2d:
         if (goodData == 0):
             raise Exception("must specify either 'dx' or 'dy'")
         elif (goodData == 1): # dy was specified, dx was not
-            self.b += dy
+            new_b = self.b + dy
         elif (goodData == 2): # dx was specified, dy was not
-            self.b += self.Y(dx)
+            new_b = self.b + self.Y(dx)
         else: # both x1 and y1 were specified
             raise Exception("must not specify both 'dx' and 'dy'")
         
-        return self
+        return Line2d(self.Slope, new_b, self.Name)
 
 class LineSegment2d:
     def __init__(self, p1, p2, name = None):
@@ -181,11 +183,7 @@ class LineSegment2d:
             return False
 
     def Shift(self, *, dx = math.nan, dy = math.nan):
-        self.line.Shift(dx, dy)
-        self.p1.Shift(dx, dy)
-        self.p2.Shift(dx, dy)
-        
-        return self
+        return LineSegment2d(self.Point1.Shift(dx, dy), self.Point2.Shift(dx, dy))
 
     @property
     def Name(self):
@@ -448,7 +446,7 @@ class BallPlug_BeveledSeat:
 
 # Ball plug against a square seat.  All angles are taken from the axis of the parts (half angles)
 class BallPlug_SquareSeat:
-    def __init__(self, diaSeat, diaBall = 0.0 * un.Length.inch, contactAngle = 0.0 * un.Angle.deg):
+    def __init__(self, diaSeat, diaBall = 0.0 * un.Length.m, contactAngle = 0.0 * un.Angle.deg):
         self._diaSeat = diaSeat.SIValue
         self._srPlug  = diaBall.SIValue / 2.0
         self._contactAngle = contactAngle.SIValue
@@ -536,18 +534,17 @@ class ConicalPlug_SquareSeat:
         
     def FlowArea(self, stroke):
         _stroke = stroke.SIValue
-
-        self._plug_segment.Shift(dy = _stroke)
+        stroke_segment = self._plug_segment.Shift(dy = _stroke)
 
         # start by calculating the tip to corner conical area
-        cornerSegment = LineSegment2d(self._plug_segment.p1, self._seat, f'{self._plug_segment.p1.Name} - {self._seat.Name}')
+        cornerSegment = LineSegment2d(stroke_segment.p1, self._seat, f'{stroke_segment.p1.Name} - {self._seat.Name}')
         area = cornerSegment.ConicalArea()
         self._area_zone = cornerSegment.Name
 
         # next, look at the line segments going thru the seat corner perpendicular to the cone segment
-        normalPt = self._plug_segment.Line.Perpendicular(self._seat).Intersection(self._plug_segment.Line)
-        normalSegment = LineSegment2d(normalPt, self._seat, f'{self._plug_segment.Name} - {self._seat.Name}')
-        if (self._plug_segment.ContainsPoint(normalPt)):
+        normalPt = stroke_segment.Line.Perpendicular(self._seat).Intersection(stroke_segment.Line)
+        normalSegment = LineSegment2d(normalPt, self._seat, f'{stroke_segment.Name} - {self._seat.Name}')
+        if (stroke_segment.ContainsPoint(normalPt)):
             normalArea = normalSegment.ConicalArea()
             if (normalArea < area):
                 area = normalArea
@@ -561,7 +558,7 @@ class ConicalPlug_SquareSeat:
 
     @property
     def ContactDia(self):
-        return self._diaSeat * un.Length.inch 
+        return self._diaSeat * un.Length.m
 
     @property
     def ContactLocation(self):
@@ -617,7 +614,7 @@ class ___OLD___ConicalPlug_SquareSeat:
 
     @property
     def ContactDia(self):
-        return self._diaSeat * un.Length.inch 
+        return self._diaSeat * un.Length.m
 
     @property
     def ContactLocation(self):
@@ -658,10 +655,14 @@ class ConicalPlug_BeveledSeat:
             self._xc = self._x2
             self._yc = self._y2
             self._contact_location = 'upper corner'
-        else: # contact is at the lower corner of the seat
+        elif (self._angPlug < self._angSeat): # contact is at the lower corner of the seat
             self._xc = self._x1
             self._yc = self._y1
             self._contact_location = 'lower corner'
+        else:
+            self._xc = (self._x1 + self._x2) / 2.0
+            self._yc = (self._y1 + self._y2) / 2.0
+            self._contact_location = 'midway'
 
         plugContact = Point2d(self._xc, self._yc, 'plug contact')
         plug_line = Line2d.ThruPointWithSlope(plugContact, math.tan(math.pi / 2 - self._angPlug))
@@ -684,7 +685,7 @@ class ConicalPlug_BeveledSeat:
 
     @property
     def ContactDia(self):
-        return (self._xc * 2.0) * un.Length.inch 
+        return (self._xc * 2.0) * un.Length.m
 
     @property
     def ContactLocation(self):

@@ -495,7 +495,7 @@ class WaterIAPWS97:
 		self.Properties.Press = press
 		self.Properties.Temp = temp
 
-		if ((press == pNan) and (temp = tNan)):
+		if ((press == WaterIAPWS97.pNan) and (temp == WaterIAPWS97.tNan)):
 			self.Saturation = SatType.SatOff	
 
 		return self
@@ -512,6 +512,8 @@ class WaterIAPWS97:
 
 	# 0.0 quality is saturated water, 1.0 is saturated vapor, ignored if atSaturation is False
 	def SetQuality(self, quality: float):
+		if (quality > 1.0):
+			print('*** Quality ranges from 0 (liquid) to 1.0 (vapor) ***')
 		self.Properties.Quality = quality
 		return self
 	

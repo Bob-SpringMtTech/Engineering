@@ -897,6 +897,7 @@ def B16_34_Threaded_Body_Joint(Pc, Dg, cover_thd, LE):
     return S_act   
 
 # Taken from Taylor Forge Bulletin No. 45 "Design of Flanges for Full Face Gaskets"
+# 01Aug2023 - Checked against Compress sample sent by Scott Islip.
 def TFFullFace_Dims(od, id, bc): 
     if (verbose):
         print(f"Calculate flange gasket dimensions G (diameter of gasket load reaction), hg and h'g (bolt load moment arms, inside and outside b.c.),")
@@ -940,7 +941,7 @@ def TFFullFace_Dims(od, id, bc):
 def TFFullFace_Wm1(P, G, b, m, hg_i, hg_o):
 
     Wm1 = ((G.squared() / 4.0) + ((hg_i / hg_o + 1.0 * uul) * b * G * m * 2.0)) * (P * math.pi)
-    f_str = "  Wm1 = pi * P * (G^2 / 4 + (1 + hg / h'g) 2 * * b * G * m)"
+    f_str = "  Wm1 = pi * P * (G^2 / 4 + (1 + hg / h'g) * 2 * b * G * m)"
 
     if (verbose):
         print(f_str)
@@ -956,7 +957,7 @@ def TFFullFace_Wm1(P, G, b, m, hg_i, hg_o):
 
     return Wm1
 
-# Taken from Taylor Forge Bulletin No. 45 "Design of Flanges for Full ace Gaskets"
+# Taken from Taylor Forge Bulletin No. 45 "Design of Flanges for Full Face Gaskets"
 def TFFullFace_Wm2(G, b, y, hg_i, hg_o):
 
     Wm2 = b * G * y * (hg_i / hg_o + 1.0 * uul) * math.pi
