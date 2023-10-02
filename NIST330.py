@@ -232,6 +232,15 @@ class SpVolume:
     ft3_lbm = um.Unit('ft^3/lbm', _dim, 1.0 / 16.0184633739601)
     in3_lbm = um.Unit('in^3/lbm', _dim, 1.0 / 27679.9047102031)
 
+class Stress:
+   #                    'kg', 'm', 's', 'A', 'K', 'mol', 'cd', '$'
+    _dim = um.Dimension([1,   -1,  -2,   0,   0,   0,     0,    0])
+    Pa = um.Unit('Pa', _dim, 1.0)
+    kPa = um.Unit('kPa', _dim, 1000.0)
+    MPa = um.Unit('MPa', _dim, 1000000.0)
+    psi = um.Unit('psi', _dim, 6894.75729317)
+    ksi = um.Unit('ksi', _dim, 6894757.29317)
+    msi = um.Unit('msi', _dim, 6894757293.17)
 class Temperature:
     #                   'kg', 'm', 's', 'A', 'K', 'mol', 'cd', '$'
     _dim = um.Dimension([0,    0,   0,   0,   1,   0,     0,    0])
