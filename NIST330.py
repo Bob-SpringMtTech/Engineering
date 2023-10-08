@@ -188,6 +188,7 @@ class Pressure:
     _dim = um.Dimension([1,   -1,  -2,   0,   0,   0,     0,    0])
     atm = um.Unit('atm', _dim, 101325.0)
     bar = um.Unit('bar', _dim, 100000.0)
+    mbar = um.Unit('mbar', _dim, 100.0)
     Pa = um.Unit('Pa', _dim, 1.0)
     kPa = um.Unit('kPa', _dim, 1000.0)
     MPa = um.Unit('MPa', _dim, 1000000.0)

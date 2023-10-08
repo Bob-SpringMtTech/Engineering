@@ -15,6 +15,15 @@ class BaseQuantity(Enum):
     _Count = 8
 
 class Dimension:
+    pass
+
+class Quantity:
+    pass
+
+class Unit:
+    pass
+
+class Dimension:
     symbol = ['kg', 'm', 's', 'A', 'K', 'mol', 'cd', '$']
     baseTypeName = 'Dimension'
 
@@ -35,7 +44,7 @@ class Dimension:
             return NotImplemented
             
     def __repr__(self):
-        return 'Dimension({0})'.format(self._exp)
+        return f'Dimension({self._exp}'
 
     def __str__(self):
         sep = '*'
@@ -47,7 +56,7 @@ class Dimension:
                 continue
             result += Dimension.symbol[d]
             if xp > 1:
-                result += '^{0}'.format(xp)
+                result += f'^{xp}'
             result += sep
         
         # clean up any trailing separator and add the '/' to start adding the denominator
@@ -63,7 +72,7 @@ class Dimension:
                 continue
             result += Dimension.symbol[d]
             if xp < -1:
-                result += '^{0}'.format(-xp)
+                result += f'^{-xp}'
             result += sep
         
         # clean up and trailing separators
@@ -73,31 +82,31 @@ class Dimension:
         return result
         
     @property
-    def BaseTypeName(self):
+    def BaseTypeName(self) -> str:
         return Dimension.baseTypeName
 
     @property
-    def HasDimension(self):
+    def HasDimension(self) -> bool:
         return True
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         if not isinstance(other, Dimension):
             raise TypeError("Unable to convert %s to Dimension" % other)
             return NotImplemented
 
         return (self._exp == other._exp).all()
             
-    def __ne__(self, other):
+    def __ne__(self, other) -> bool:
         return not (self == other)
 
-    def __mul__(self, other):
+    def __mul__(self, other) -> Dimension:
         if not isinstance(other, Dimension):
             raise TypeError("Unable to convert %s to Dimension" % other)
             return NotImplemented
 
         return Dimension(self._exp + other._exp)
         
-    def __truediv__(self, other):
+    def __truediv__(self, other) -> Dimension:
         if not isinstance(other, Dimension):
             raise TypeError("Unable to convert %s to Dimension" % other)
             return NotImplemented
@@ -107,7 +116,7 @@ class Dimension:
     # raises each exponent to the 'numer/denom' power.  'numer' and 'denom' must
     # be integers and the result of the exponentiation must be an integer.
     # this behavior differs from the standard Python pow() function
-    def power(self, numer, denom = 1):
+    def power(self, numer : int, denom : int = 1) -> Dimension:
         if not isinstance(numer, int):
             raise TypeError("Only integer exponents are supported")
             return NotImplemented
@@ -124,13 +133,13 @@ class Dimension:
 
         return Dimension(_result)
 
-    def sqrt(self):
+    def sqrt(self) -> Dimension:
         return self.power(1, 2)
 
-    def squared(self):
+    def squared(self) -> Dimension:
         return self.power(2)
 
-    def cubed(self):
+    def cubed(self) -> Dimension:
         return self.power(3)
 
 # Create the fundamental dimensions
@@ -145,13 +154,11 @@ Amount_dimension            = Dimension([0, 0, 0, 0, 0, 1, 0, 0])
 LuminousIntensity_dimension = Dimension([0, 0, 0, 0, 0, 0, 1, 0])
 Currency_dimension          = Dimension([0, 0, 0, 0, 0, 0, 0, 1])
 
-class Quantity:
-    pass
 
 class Unit:
     baseTypeName = 'Unit'
 
-    def __init__(self, symbol, dimension, factor, offset = 0.0):
+    def __init__(self, symbol : str, dimension : Dimension, factor : float, offset : float = 0.0):
         # user_val = (base_val - offset) / factor) 
         if symbol is None:
             self._symbol = dimension.__str__()
@@ -170,39 +177,39 @@ class Unit:
     # q = 12.0 * inch
     # t = 100 * degC
 
-    def Create(self, symbol):
+    def Create(self, symbol : str):
         self._symbol = symbol
 
         return self
 
-    def Value(self, siValue):
+    def Value(self, siValue : float) -> float:
         return (siValue - self._offset) / self._factor
 
-    def SIValue(self, value):
+    def SIValue(self, value : float) -> float:
         return value * self._factor + self._offset
 
     @property
-    def BaseTypeName(self):
+    def BaseTypeName(self) -> str:
         return Unit.baseTypeName
 
     @property
-    def Factor(self):
+    def Factor(self) -> float:
         return self._factor
 
     @property
-    def Offset(self):
+    def Offset(self) -> float:
         return self._offset
 
     @property
-    def HasDimension(self):
+    def HasDimension(self) -> bool:
         return True
 
     @property
-    def Dimension(self):
+    def Dimension(self) -> Dimension:
         return self._dimension
 
     @property
-    def Symbol(self):
+    def Symbol(self) -> str:
         return self._symbol
 
     def __repr__(self):
@@ -216,13 +223,13 @@ class Unit:
         foo = 1.0
         return f'{foo} {self._dimension} = {self.Value(foo)} {self._symbol}'
         
-    def Similar(self, other):
+    def Similar(self, other) -> bool:
         if type(other) != Unit:
             raise TypeError("Argument type not supported: %s " % other)
         
         return self._dimension == other._dimension
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         if self.Similar(other):
             if self._factor == other._factor:
                 if self._offset == other._offset:
@@ -230,7 +237,7 @@ class Unit:
 
         return False
     
-    def __ne__(self, other):
+    def __ne__(self, other) -> bool:
         return not (self == other)
 
     def __mul__(self, other):
@@ -254,7 +261,7 @@ class Unit:
             raise TypeError("Unable to convert %s to Unit" % other)
 
         
-    def __truediv__(self, other):
+    def __truediv__(self, other)-> Unit:
         if type(other) == Unit:
             return Unit(None, self._dimension / other._dimension, self._factor / other._factor)
         raise TypeError("Unable to convert %s to Unit" % other)
@@ -338,6 +345,7 @@ def LoadUnits(filename):
     
     return ud
 
+
 class Quantity:
     baseTypeName = 'Quantity'
 
@@ -351,56 +359,67 @@ class Quantity:
         else:
             raise TypeError("Invalid Unit argument: %s " % qty)
 
-    def __Build__(val, dimension):
+
+    def __Build__(val : float, dimension : Dimension) -> Quantity:
         newQty = Quantity()
         newQty._val = val
         newQty._dimension = dimension
         return newQty
-    
-    @property
-    def BaseTypeName(self):
-        return Quantity.baseTypeName
+
 
     @property
-    def SIValue(self):
-        return self._val
-        
+    def BaseTypeName(self) -> str:
+        return Quantity.baseTypeName
+
+
     @property
-    def SIValueStr(self):
-        fmt = '{0} {1}'
-        return fmt.format(self._val, self.Dimension)
-        
-    def ValueAsStr(self, unit, format_spec = ''):
+    def SIValue(self) -> float:
+        return self._val
+
+
+    @property
+    def SIValueStr(self) -> str:
+        return f'{self._val} {self.Dimension}'
+
+
+    def As(self, unit : Unit, format_spec : str = '') -> str:
         if not self.Similar(unit):
             raise ValueError(f'invalid unit conversion: {unit.Symbol}')
 
         if len(format_spec) == 0:
-            fmt = '{0} {1}'
+            result = f'{unit.Value(self._val)} {unit.Symbol}'
         else:
-            fmt = '{0:' + format_spec + '} {1}'
-        return fmt.format(unit.Value(self._val), unit.Symbol)
+            result = f'{unit.Value(self._val):{format_spec}} {unit.Symbol}'
+        return result
 
-    def Value(self, unit)-> float:
+
+    def Value(self, unit : Unit)-> float:
         return unit.Value(self._val)
 
+
     @property
-    def HasDimension(self):
+    def HasDimension(self) -> bool:
         return True
 
+
     @property
-    def Dimension(self):
+    def Dimension(self) -> Dimension:
         return self._dimension
 
-    def __repr__(self):
+
+    def __repr__(self) -> str:
         return f'Quantity({self._val}, Dim({self._dimension})'
 
-    def __str__(self):
+
+    def __str__(self) -> str:
         return f'{self._val} {self._dimension}'
 
-    def __call__(self, unit):
-        return self.ValueAsStr(unit)
 
-    def Similar(self, other):
+    def __call__(self, unit: Unit) -> str:
+        return self.As(unit)
+
+
+    def Similar(self, other) -> bool:
         if other.BaseTypeName == Quantity.baseTypeName:
             return self._dimension == other._dimension
         if other.BaseTypeName == Unit.baseTypeName:
@@ -409,70 +428,80 @@ class Quantity:
            return self._dimension == other
             
         raise TypeError("Argument type not supported: %s " % other)
-        
-    def __eq__(self, other):
+
+
+    def __eq__(self, other) -> bool:
         if self.Similar(other):
             if self._val == other._val:
                 return True
 
         return False
-    
-    def __gt__(self, other):
+
+
+    def __gt__(self, other) -> bool:
         if self.Similar(other):
             if self._val > other._val:
                 return True
 
         return False
 
-    def __ge__(self, other):
+
+    def __ge__(self, other) -> bool:
         if self.Similar(other):
             if self._val >= other._val:
                 return True
 
         return False
 
-    def __lt__(self, other):
+
+    def __lt__(self, other) -> bool:
         if self.Similar(other):
             if self._val < other._val:
                 return True
 
         return False
 
-    def __le__(self, other):
+
+    def __le__(self, other) -> bool:
         if self.Similar(other):
             if self._val <= other._val:
                 return True
 
         return False
 
-    def __ne__(self, other):
+
+    def __ne__(self, other) -> bool:
         return not (self == other)
 
-    def __add__(self, other):
+
+    def __add__(self, other : Quantity) -> Quantity:
         if other.BaseTypeName == Quantity.baseTypeName:
             if self.Similar(other):
                 return Quantity.__Build__(self._val + other._val, self._dimension)
             else:
                 raise ValueError("Quantities must be dimensionally equal")
         raise TypeError("Unable to convert %s to Quantity" % other)
-            
-    def __radd__(self, other):
+
+
+    def __radd__(self, other : Quantity) -> Quantity:
         if other.BaseTypeName == Quantity.baseTypeName:
             if self._unit.Similar(other):
                 return Quantity.__Build__(self._val + other._val, self._dimension)
             else:
                 raise ValueError("Quantities must be dimensionally equal")
         raise TypeError("Unable to convert %s to Quantity" % other)
-            
-    def __sub__(self, other):
+
+
+    def __sub__(self, other : Quantity) -> Quantity:
         if other.BaseTypeName == Quantity.baseTypeName:
             if self.Similar(other):
                 return Quantity.__Build__(self._val - other._val, self._dimension)
             else:
                 raise ValueError("Quantities must be dimensionally equal")
         raise TypeError("Unable to convert %s to Quantity" % other)
-            
-    def __mul__(self, other):
+
+
+    def __mul__(self, other) -> Quantity:
         if type(other) == float:
             return Quantity.__Build__(self._val * other, self._dimension)
         
@@ -487,7 +516,8 @@ class Quantity:
         
         raise TypeError(f"***Unable to multiply type {type(other)} of {other} to Quantity")
             
-    def __truediv__(self, other):
+
+    def __truediv__(self, other) -> Quantity:
         if type(other) == float:
             return Quantity.__Build__(self._val / other, self._dimension)
         
@@ -502,18 +532,51 @@ class Quantity:
         
         raise TypeError("Unable to divide Quantity by %s" % other)
 
-    def power(self, numer, denom = 1):
+
+    def power(self, numer, denom = 1) -> Quantity:
         v = pow(self._val, numer / denom)
         d = self._dimension.power(int(numer), int(denom))
         return Quantity.__Build__(v, d)
 
-    def sqrt(self):
+
+    def sqrt(self) -> Quantity:
         return self.power(1, 2)
 
-    def squared(self):
+
+    def squared(self) -> Quantity:
         return self.power(2)
 
-    def cubed(self):
+
+    def cubed(self) -> Quantity:
         return self.power(3)
 
-qtynan = np.nan * unitless
+
+# qtynan = np.nan * unitless
+
+
+if __name__ == '__main__':
+    def main():
+        _dim = Dimension([0,    1,   0,   0,   0,   0,     0,    0])
+
+        um    = Unit('m',    _dim, 1.0)
+        ucm   = Unit('cm',   _dim, 0.01)
+        umm   = Unit('mm',   _dim, 0.001)
+        uKm   = Unit('Km',   _dim, 1000.0)
+        uft   = Unit('ft',   _dim, 0.3048)
+        uftUS = Unit('ftUS', _dim, 0.304800609601)
+        uinch = Unit('in',   _dim, 0.0254)
+        umil  = Unit('mil',  _dim, 0.0000254)
+        umile = Unit('mi',   _dim, 1609.344)
+        umiUS = Unit('miUS', _dim, 1609.34721869)
+        unmi  = Unit('nmi',  _dim, 1852.0)
+        uyd   = Unit('yd',   _dim, 0.9144)
+
+        d1 = 3.0 * um
+        d2 = uinch * 6.2345
+        d3 = d1 + d2
+        a1 = d1.squared()
+        v1 = d1 * d2 * d3
+        
+        print(f'd3 = {d3.As(uinch, "0.2f")}')
+
+    main()
