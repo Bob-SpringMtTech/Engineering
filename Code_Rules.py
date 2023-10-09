@@ -201,7 +201,7 @@ def B31_3_Para304_1_2(P, D, d, c, S, E, W, t_act = (0.0 * uin)):
             print('***error: t >= D / 6 - See B31.3 304.1.2(b)')
     else:
         Y = B31_3_Table304_1_1(D, d, c)
-        t = (P * D) / ((S * E * W) + (P * Y)) / 2.0
+        t = (P * D) / ((S * E * W) + (P * Y)) / 2.0 + c
 
         f_str = '  t = (P*D) / (2 * (S*E*W + P*Y))'
     
@@ -209,12 +209,13 @@ def B31_3_Para304_1_2(P, D, d, c, S, E, W, t_act = (0.0 * uin)):
             st = uFormat(t, ulen, flen)
             sP = uFormat(P, upr, fpr)
             sD = uFormat(D, ulen, flen)
+            sc = uFormat(c, ulen, flen)
             sS = uFormat(S, ust, fst)
             sE = uFormat(E, uul, ful)
             sW = uFormat(W, uul, ful)
             sY = uFormat(Y, uul, ful)
             print(f_str)
-            print(f'  t = {st} = ({sP} * {sD}) / (2 * ({sS} * {sE} * {sW} + {sP} * {sY})')
+            print(f'  t = {st} = ({sP} * {sD}) / (2 * ({sS} * {sE} * {sW} + {sP} * {sY} + {sc})')
 
             if (t_act.Value(uin) > 0.0):
                 st_act = uFormat(t_act, ulen, flen)

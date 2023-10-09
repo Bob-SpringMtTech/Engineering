@@ -155,6 +155,197 @@ LuminousIntensity_dimension = Dimension([0, 0, 0, 0, 0, 0, 1, 0])
 Currency_dimension          = Dimension([0, 0, 0, 0, 0, 0, 0, 1])
 
 
+class Unit:
+    baseTypeName = 'Unit'
+
+    def __init__(self, symbol : str, dimension : Dimension, factor : float, offset : float = 0.0):
+        # user_val = (base_val - offset) / factor) 
+        if symbol is None:
+            self._symbol = dimension.__str__()
+        else:
+            self._symbol = symbol
+
+        self._dimension = dimension
+        
+        if factor > 0.0:
+            self._factor = factor 
+        else:
+            raise ValueError("Factor must be positive: %s " % factor)
+
+        self._offset = offset
+    
+    # q = 12.0 * inch
+    # t = 100 * degC
+
+    def Create(self, symbol : str):
+        self._symbol = symbol
+
+        return self
+
+    def Value(self, siValue : float) -> float:
+        return (siValue - self._offset) / self._factor
+
+    def SIValue(self, value : float) -> float:
+        return value * self._factor + self._offset
+
+    @property
+    def BaseTypeName(self) -> str:
+        return Unit.baseTypeName
+
+    @property
+    def Factor(self) -> float:
+        return self._factor
+
+    @property
+    def Offset(self) -> float:
+        return self._offset
+
+    @property
+    def HasDimension(self) -> bool:
+        return True
+
+    @property
+    def Dimension(self) -> Dimension:
+        return self._dimension
+
+    @property
+    def Symbol(self) -> str:
+        return self._symbol
+
+    def __repr__(self):
+        if self._offset == 0.0:
+            return 'Unit({0}, Dimension({1}), factor={2})'.format(self._symbol, self._dimension, self._factor)
+        else:
+            return 'Unit({0}, Dimension({1}), factor={2} offset={3})'.format(self._symbol, self._dimension, self._factor, self._offset)
+
+
+    def __str__(self):
+        foo = 1.0
+        return f'{foo} {self._dimension} = {self.Value(foo)} {self._symbol}'
+        
+    def Similar(self, other) -> bool:
+        if type(other) != Unit:
+            raise TypeError("Argument type not supported: %s " % other)
+        
+        return self._dimension == other._dimension
+
+    def __eq__(self, other) -> bool:
+        if self.Similar(other):
+            if self._factor == other._factor:
+                if self._offset == other._offset:
+                    return True
+
+        return False
+    
+    def __ne__(self, other) -> bool:
+        return not (self == other)
+
+    def __mul__(self, other):
+        if type(other) == Unit:
+            return Unit(None, self._dimension * other._dimension, self._factor * other._factor)
+        if type(other) == float:
+            return Quantity.__Build__(self.SIValue(other), self._dimension)
+        if type(other) == int:
+            return Quantity.__Build__(self.SIValue(float(other)), self._dimension)
+        else:
+            raise TypeError("Unable to convert %s to Unit" % other)
+
+    def __rmul__(self, other):
+        if type(other) == Unit:
+            return Unit(None, self._dimension * other._dimension, self._factor * other._factor)
+        if type(other) == float:
+            return Quantity.__Build__(self.SIValue(other), self._dimension)
+        if type(other) == int:
+            return Quantity.__Build__(self.SIValue(float(other)), self._dimension)
+        else:
+            raise TypeError("Unable to convert %s to Unit" % other)
+
+        
+    def __truediv__(self, other)-> Unit:
+        if type(other) == Unit:
+            return Unit(None, self._dimension / other._dimension, self._factor / other._factor)
+        raise TypeError("Unable to convert %s to Unit" % other)
+
+    def power(self, numer, denom, symbol = None):
+        _f = pow(self._factor, numer / denom)
+        _d = self._dimension.power(int(numer), int(denom))
+        return Unit(symbol, _d, _f)
+
+    def sqrt(self, symbol = None):
+        return self.power(1, 2, symbol)
+
+    def squared(self, symbol = None):
+        return self.power(2, 1, symbol)
+
+    def cubed(self, symbol = None):
+        return self.power(3, 1, symbol)
+
+# Create the fundamental units
+# 'kg', 'm', 's', 'A', 'K', 'mol', 'cd', '$'
+unitless = Unit('', Dimensionless, 1.0)
+# kilogram = Unit('kg', Mass_dimension, 1.0)
+# meter = Unit('m', Length_dimension, 1.0)
+# second = Unit('s', Time_dimension, 1.0)
+# ampere = Unit('A', Current_dimension, 1.0)
+# kelvin = Unit('K', Temperature_dimension, 1.0)
+# mol = Unit('mol', Amount_dimension, 1.0)
+# candela = Unit('cd', LuminousIntensity_dimension, 1.0)
+# dollar = Unit('$', Currency_dimension, 1.0)
+
+import xml.etree.ElementTree as ET
+
+def parseExp(exptxt):
+    result = [0] * 8
+
+    # 'kg', 'm', 's', 'A', 'K', 'mol', 'cd', '$'
+    #  m:0,kg:1,s:2,A:3,°K:4,Mol:5,cd:6
+    explist = exptxt.split(',')
+    for dim in explist:
+        exp = dim.split(':')
+        if exp[0] == 'kg':
+            result[0] = int(exp[1])
+        if exp[0] == 'm':
+            result[1] = int(exp[1])
+        if exp[0] == 's':
+            result[2] = int(exp[1])
+        if exp[0] == 'A':
+            result[3] = int(exp[1])
+        if exp[0] == '°K':
+            result[4] = int(exp[1])
+        if exp[0] == 'mol':
+            result[5] = int(exp[1])
+        if exp[0] == 'cd':
+            result[6] = int(exp[1])
+        if exp[0] == '$':
+            result[7] = int(exp[1])
+    return Dimension(result)
+
+# Import units from .xml file
+# See https://en.wikipedia.org/wiki/Alt_code for Alt special unit characters
+# Alt  30 = ▲ - filled triangle - used for delta
+# Alt 230 = µ - micron - 19
+# Alt 234 = Ω - Omega - Ohm
+# Alt 248 = ° - degree - angle, temperature
+
+def LoadUnits(filename):
+    tree = ET.parse(filename)
+    root = tree.getroot()
+    unitList = root.get('UnitsOfMeasure')
+
+    ud = dict()
+
+    for u in tree.findall('Unit'):
+        symbol = u.find('Symbol').text
+        factor = float(u.find('Factor').text)
+        offset = float(u.find('Offset').text)
+        exponents = u.find('Exponents').text
+        explist = parseExp(exponents)
+        newUnit = Unit(symbol, explist, factor, offset)
+        ud[symbol] = newUnit
+    
+    return ud
+
+
 class Quantity:
     baseTypeName = 'Quantity'
 
@@ -165,22 +356,15 @@ class Quantity:
         elif type(qty) == Quantity:
             self._val = qty._val
             self._dimension = qty._dimension
-        elif type(qty) == float:
-            self._val = qty
-            self._dimension = Dimensionless
-        elif type(qty) == int:
-            self._val = float(qty)
-            self._dimension = Dimensionless
         else:
             raise TypeError("Invalid Unit argument: %s " % qty)
 
 
-    @classmethod
-    def Create(cls, val : float, dimension : Dimension) -> Quantity:
-        qty = Quantity()
-        qty._val = val
-        qty._dimension = dimension
-        return qty
+    def __Build__(val : float, dimension : Dimension) -> Quantity:
+        newQty = Quantity()
+        newQty._val = val
+        newQty._dimension = dimension
+        return newQty
 
 
     @property
@@ -196,6 +380,21 @@ class Quantity:
     @property
     def SIValueStr(self) -> str:
         return f'{self._val} {self.Dimension}'
+
+
+    def As(self, unit : Unit, format_spec : str = '') -> str:
+        if not self.Similar(unit):
+            raise ValueError(f'invalid unit conversion: {unit.Symbol}')
+
+        if len(format_spec) == 0:
+            result = f'{unit.Value(self._val)} {unit.Symbol}'
+        else:
+            result = f'{unit.Value(self._val):{format_spec}} {unit.Symbol}'
+        return result
+
+
+    def Value(self, unit : Unit)-> float:
+        return unit.Value(self._val)
 
 
     @property
@@ -217,7 +416,7 @@ class Quantity:
 
 
     def __call__(self, unit: Unit) -> str:
-        return self.Format(unit)
+        return self.As(unit)
 
 
     def Similar(self, other) -> bool:
@@ -278,7 +477,7 @@ class Quantity:
     def __add__(self, other : Quantity) -> Quantity:
         if other.BaseTypeName == Quantity.baseTypeName:
             if self.Similar(other):
-                return Quantity.Create(self._val + other._val, self._dimension)
+                return Quantity.__Build__(self._val + other._val, self._dimension)
             else:
                 raise ValueError("Quantities must be dimensionally equal")
         raise TypeError("Unable to convert %s to Quantity" % other)
@@ -287,7 +486,7 @@ class Quantity:
     def __radd__(self, other : Quantity) -> Quantity:
         if other.BaseTypeName == Quantity.baseTypeName:
             if self._unit.Similar(other):
-                return Quantity.Create(self._val + other._val, self._dimension)
+                return Quantity.__Build__(self._val + other._val, self._dimension)
             else:
                 raise ValueError("Quantities must be dimensionally equal")
         raise TypeError("Unable to convert %s to Quantity" % other)
@@ -296,7 +495,7 @@ class Quantity:
     def __sub__(self, other : Quantity) -> Quantity:
         if other.BaseTypeName == Quantity.baseTypeName:
             if self.Similar(other):
-                return Quantity.Create(self._val - other._val, self._dimension)
+                return Quantity.__Build__(self._val - other._val, self._dimension)
             else:
                 raise ValueError("Quantities must be dimensionally equal")
         raise TypeError("Unable to convert %s to Quantity" % other)
@@ -304,48 +503,40 @@ class Quantity:
 
     def __mul__(self, other) -> Quantity:
         if type(other) == float:
-            return Quantity.Create(self._val * other, self._dimension)
+            return Quantity.__Build__(self._val * other, self._dimension)
         
         if type(other) == np.double:
-            return Quantity.Create(self._val * other, self._dimension)
+            return Quantity.__Build__(self._val * other, self._dimension)
         
         if type(other) == int:
-            return Quantity.Create(self._val * float(other), self._dimension)
+            return Quantity.__Build__(self._val * float(other), self._dimension)
         
         if other.BaseTypeName == Quantity.baseTypeName:
-            return Quantity.Create(self._val * other._val, self._dimension * other._dimension)
+            return Quantity.__Build__(self._val * other._val, self._dimension * other._dimension)
         
         raise TypeError(f"***Unable to multiply type {type(other)} of {other} to Quantity")
             
 
-    def __rmul__(self, other) -> Quantity:
-        return self.__mul__(other)
-
-
     def __truediv__(self, other) -> Quantity:
         if type(other) == float:
-            return Quantity.Create(self._val / other, self._dimension)
+            return Quantity.__Build__(self._val / other, self._dimension)
         
         if type(other) == np.double:
-            return Quantity.Create(self._val / other, self._dimension)
+            return Quantity.__Build__(self._val / other, self._dimension)
         
         if type(other) == int:
-            return Quantity.Create(self._val / float(other), self._dimension)
+            return Quantity.__Build__(self._val / float(other), self._dimension)
         
         if other.BaseTypeName == Quantity.baseTypeName:
-            return Quantity.Create(self._val / other._val, self._dimension / other._dimension)
+            return Quantity.__Build__(self._val / other._val, self._dimension / other._dimension)
         
         raise TypeError("Unable to divide Quantity by %s" % other)
-
-
-    def __rtruediv__(self, other) -> Quantity:
-        return other * self.power(-1)
 
 
     def power(self, numer, denom = 1) -> Quantity:
         v = pow(self._val, numer / denom)
         d = self._dimension.power(int(numer), int(denom))
-        return Quantity.Create(v, d)
+        return Quantity.__Build__(v, d)
 
 
     def sqrt(self) -> Quantity:
@@ -358,272 +549,34 @@ class Quantity:
 
     def cubed(self) -> Quantity:
         return self.power(3)
-    
-
-    def Value(self, unit : Unit = None)-> float:
-        if (unit is None):
-            return self._val # base SI value
-        else:
-            return unit.Value(self)
-
-
-    def Format(self, unit : Unit = None, format_spec : str = '') -> str:
-        if (unit is None):
-            if len(format_spec) == 0:
-                return f'{self._val} {self.Dimension}'
-            else:
-                return f'{self._val}:{format_spec} {self.Dimension}'
-
-        if not self.Similar(unit):
-            raise ValueError(f'invalid unit conversion: {unit.Symbol}')
-
-        if len(format_spec) == 0:
-            result = f'{self.Value(unit)} {unit.Symbol}'
-        else:
-            xxx = self.Value(unit)
-            result = f'{xxx:{format_spec}} {unit.Symbol}'
-            #result = f'{self.Value(unit):{format_spec}} {unit.Symbol}'
-        return result
-
-
-class Unit(Quantity):
-    # baseTypeName = 'Unit'
-
-    def __init__(self, symbol : str, factor : Quantity, offset : Quantity = None):
-        super().__init__(factor)
-        if factor.SIValue <= 0.0:
-            raise ValueError("Factor must be positive: %s " % factor)
-
-        # user_val = (base_val - offset) / factor) 
-        if symbol is None:
-            self._symbol = self._dimension.__str__()
-        else:
-            self._symbol = symbol
-        
-        if offset is None:
-            self._offset = 0.0
-        else:
-            self._offset = offset.SIValue
-    
-
-    @classmethod
-    def Create(cls, symbol: str, dimension : Dimension, factor : float, offset : float = 0.0) -> Unit:
-        q_factor = Quantity.Create(factor, dimension)
-        q_offset = Quantity.Create(offset, dimension)
-        unit = Unit(symbol, q_factor, q_offset)
-        return unit
-
-
-#    def Create(self, symbol : str):
-#        self._symbol = symbol
-#
-#        return self
-
-
-    def Value(self, qty : Quantity) -> float:
-        return (qty.SIValue - self._offset) / self.Factor
-
-
- #   @property
- #   def BaseTypeName(self) -> str:
- #       return Unit.baseTypeName
-
-
-    @property
-    def Factor(self) -> float:
-        return super().SIValue
-
-
-    @property
-    def Offset(self) -> float:
-        return self._offset
-
-
-    @property
-    def Symbol(self) -> str:
-        return self._symbol
-
-
-    def __repr__(self):
-        if self._offset == 0.0:
-            return f'Unit({self._symbol}, Dimension({super().Dimension}), factor={self.Factor})'
-        else:
-            return f'Unit({self._symbol}, Dimension({super().Dimension}), factor={self.Factor} offset={self.Offset})'
-
-
-    def __str__(self):
-        foo = 1.0
-        return f'{foo} {self._dimension} = {self.Value(foo)} {self._symbol}'
-
-
-    def __eq__(self, other) -> bool:
-        if self.Similar(other):
-            if self.SIValue == other.SIValue:
-                if self._offset == other._offset:
-                    return True
-
-        return False
-
-
-    def __add__(self, other : Unit) -> Quantity:
-        return super().__add__(other)
-
-
-    def __radd__(self, other : Unit) -> Quantity:
-        return super().__radd__(other)
-
-
-    def __sub__(self, other : Unit) -> Quantity:
-        return super().__sub__(other)
-
-
-    def __mul__(self, other) -> Quantity:
-        return super().__mul__(other)
-            
-
-    def __rmul__(self, other) -> Quantity:
-        return super().__mul__(other)
-            
-
-    def __truediv__(self, other) -> Quantity:
-        return super().__truediv__(other)
-
-
-    def __rtruediv__(self, other) -> Quantity:
-        return super().__rtruediv__(other)
-
-
-    def power(self, numer, denom = 1) -> Quantity:
-        return super().power(numer, denom)
-
-
-    def sqrt(self) -> Quantity:
-        return super().sqrt()
-
-
-    def squared(self) -> Quantity:
-        return super().squared()
-
-
-    def cubed(self) -> Quantity:
-        return super().cubed()
-
-
-# Create the fundamental units
-# 'kg', 'm', 's', 'A', 'K', 'mol', 'cd', '$'
-# unitless = Unit('', Quantity(1.0, Dimensionless))
-# kilogram = Unit('kg', Mass_dimension, 1.0)
-# meter = Unit('m', Length_dimension, 1.0)
-# second = Unit('s', Time_dimension, 1.0)
-# ampere = Unit('A', Current_dimension, 1.0)
-# kelvin = Unit('K', Temperature_dimension, 1.0)
-# mol = Unit('mol', Amount_dimension, 1.0)
-# candela = Unit('cd', LuminousIntensity_dimension, 1.0)
-# dollar = Unit('$', Currency_dimension, 1.0)
-
-import xml.etree.ElementTree as ET
-
-def parseExp(exptxt):
-    result = [0] * 8
-
-    # 'kg', 'm', 's', 'A', 'K', 'mol', 'cd', '$'
-    #  m:0,kg:1,s:2,A:3,°K:4,Mol:5,cd:6
-    explist = exptxt.split(',')
-    for dim in explist:
-        exp = dim.split(':')
-        if exp[0] == 'kg':
-            result[0] = int(exp[1])
-        if exp[0] == 'm':
-            result[1] = int(exp[1])
-        if exp[0] == 's':
-            result[2] = int(exp[1])
-        if exp[0] == 'A':
-            result[3] = int(exp[1])
-        if exp[0] == '°K':
-            result[4] = int(exp[1])
-        if exp[0] == 'mol':
-            result[5] = int(exp[1])
-        if exp[0] == 'cd':
-            result[6] = int(exp[1])
-        if exp[0] == '$':
-            result[7] = int(exp[1])
-    return Dimension(result)
-
-# Import units from .xml file
-# See https://en.wikipedia.org/wiki/Alt_code for Alt special unit characters
-# Alt  30 = ▲ - filled triangle - used for delta
-# Alt 230 = µ - micron - 19
-# Alt 234 = Ω - Omega - Ohm
-# Alt 248 = ° - degree - angle, temperature
-
-def LoadUnits(filename):
-    tree = ET.parse(filename)
-    root = tree.getroot()
-    unitList = root.get('UnitsOfMeasure')
-
-    ud = dict()
-
-    for u in tree.findall('Unit'):
-        symbol = u.find('Symbol').text
-        factor = float(u.find('Factor').text)
-        offset = float(u.find('Offset').text)
-        exponents = u.find('Exponents').text
-        explist = parseExp(exponents)
-        newUnit = Unit(symbol, Quantity(factor, explist), Quantity(offset, explist))
-        ud[symbol] = newUnit
-    
-    return ud
 
 
 # qtynan = np.nan * unitless
 
 
 if __name__ == '__main__':
-    # Dimension handles exponents
-    # Quantity contains float and Dimension
-    # Unit is (derived from) Quantity with symbol string and offset (pressure and temperature)
-    # Quantity q1 = float * Unit
-    # sq1 = q1.Format(Unit, fmt) returns string of Value formatted 
-    # Unit u1 = value, offset, dimension, symbol
-    # su1 = u1.Format(Unit, fmt) returns string of Value formatted
-
     def main():
-        unitless = Unit(' ', Quantity.Create(1.0, Dimensionless))
+        _dim = Dimension([0,    1,   0,   0,   0,   0,     0,    0])
 
-        _dim = Length_dimension
+        um    = Unit('m',    _dim, 1.0)
+        ucm   = Unit('cm',   _dim, 0.01)
+        umm   = Unit('mm',   _dim, 0.001)
+        uKm   = Unit('Km',   _dim, 1000.0)
+        uft   = Unit('ft',   _dim, 0.3048)
+        uftUS = Unit('ftUS', _dim, 0.304800609601)
+        uinch = Unit('in',   _dim, 0.0254)
+        umil  = Unit('mil',  _dim, 0.0000254)
+        umile = Unit('mi',   _dim, 1609.344)
+        umiUS = Unit('miUS', _dim, 1609.34721869)
+        unmi  = Unit('nmi',  _dim, 1852.0)
+        uyd   = Unit('yd',   _dim, 0.9144)
 
-        um    = Unit('m',    Quantity.Create(1.0, _dim))
-        ucm   = Unit('cm',   um / 100.0)
-        umm   = Unit('mm',   um / 1000.0)
-        uKm   = Unit('Km',   um * 1000.0)
-        uft   = Unit('ft',   um * 0.3048)
-        uftUS = Unit('ftUS', Quantity.Create(0.304800609601, _dim))
-        uinch = Unit('in',   uft / 12.0)
-        umil  = Unit('mil',  Quantity.Create(0.0000254, _dim))
-        umile = Unit('mi',   Quantity.Create(1609.344, _dim))
-        umiUS = Unit('miUS', Quantity.Create(1609.34721869, _dim))
-        unmi  = Unit('nmi',  Quantity.Create(1852.0, _dim))
-        uyd   = Unit('yd',   uft * 3.0)
-
-        d1 = 2.0 * uyd
-        d9 = 3.0 * d1
-        d2 = 36.0 * uinch
+        d1 = 3.0 * um
+        d2 = uinch * 6.2345
         d3 = d1 + d2
         a1 = d1.squared()
         v1 = d1 * d2 * d3
         
-#        fu = d3.Value(uinch)
-#        fu = 1.0 * fu
-
-#        sss = f'd3 = {d3.Format(uinch, "0.2f")}'
-#        print(sss)
-
-        print(f'd3 = {d3.Format(uinch, "0.2f")}')
-        print(f'd3 = {d3.Format(uft, "0.3f")}')
-        print(f'd3 = {d3.Format(uyd, "0.4f")}')
-
-        q1 = 3.0 / um.squared()
-        print(q1)
-
+        print(f'd3 = {d3.As(uinch, "0.2f")}')
 
     main()
