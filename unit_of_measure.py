@@ -385,9 +385,7 @@ class Quantity:
             #result = f'{self.Value(unit):{format_spec}} {unit.Symbol}'
         return result
 
-
 class Unit(Quantity):
-    # baseTypeName = 'Unit'
 
     def __init__(self, symbol : str, factor : Quantity, offset : Quantity = None):
         super().__init__(factor)
@@ -395,6 +393,7 @@ class Unit(Quantity):
             raise ValueError("Factor must be positive: %s " % factor)
 
         # user_val = (base_val - offset) / factor) 
+        # base_val = user_val * factor + offset
         if symbol is None:
             self._symbol = self._dimension.__str__()
         else:
@@ -414,19 +413,8 @@ class Unit(Quantity):
         return unit
 
 
-#    def Create(self, symbol : str):
-#        self._symbol = symbol
-#
-#        return self
-
-
     def Value(self, qty : Quantity) -> float:
         return (qty.SIValue - self._offset) / self.Factor
-
-
- #   @property
- #   def BaseTypeName(self) -> str:
- #       return Unit.baseTypeName
 
 
     @property
@@ -465,48 +453,56 @@ class Unit(Quantity):
         return False
 
 
-    def __add__(self, other : Unit) -> Quantity:
-        return super().__add__(other)
-
-
-    def __radd__(self, other : Unit) -> Quantity:
-        return super().__radd__(other)
-
-
-    def __sub__(self, other : Unit) -> Quantity:
-        return super().__sub__(other)
-
-
     def __mul__(self, other) -> Quantity:
-        return super().__mul__(other)
+        result = super().__mul__(other)
+        result._val += self._offset
+        return result
             
 
     def __rmul__(self, other) -> Quantity:
-        return super().__mul__(other)
+        return self.__mul__(other)
             
 
     def __truediv__(self, other) -> Quantity:
-        return super().__truediv__(other)
+        if self._offset == 0.0:
+            return super().__truediv__(other)
+        else:
+            raise ValueError('division of Units with offsets is invalid')
 
 
     def __rtruediv__(self, other) -> Quantity:
-        return super().__rtruediv__(other)
+        if self._offset == 0.0:
+            return super().__rtruediv__(other)
+        else:
+            raise ValueError('division by Units with offsets is invalid')
 
 
     def power(self, numer, denom = 1) -> Quantity:
-        return super().power(numer, denom)
+        if self._offset == 0.0:
+            return super().power(numer, denom)
+        else:
+            raise ValueError('power() is invalid with Units with offsets')
 
 
     def sqrt(self) -> Quantity:
-        return super().sqrt()
+        if self._offset == 0.0:
+            return super().sqrt()
+        else:
+            raise ValueError('sqrt() is invalid with Units with offsets')
 
 
     def squared(self) -> Quantity:
-        return super().squared()
+        if self._offset == 0.0:
+            return super().squared()
+        else:
+            raise ValueError('squared() is invalid with Units with offsets')
 
 
     def cubed(self) -> Quantity:
-        return super().cubed()
+        if self._offset == 0.0:
+            return super().cubed()
+        else:
+            raise ValueError('cubed() is invalid with Units with offsets')
 
 
 # Create the fundamental units

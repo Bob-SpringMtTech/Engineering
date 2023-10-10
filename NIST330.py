@@ -5,7 +5,7 @@ class Acceleration:
     #                   'kg', 'm', 's', 'A', 'K', 'mol', 'cd', '$'
     _dim = um.Dimension([0,    1,  -2,   0,   0,   0,     0,    0])
     g = um.Unit.Create('g', _dim, 9.80665)
-    Gal = um.Unit.Create('Gal', _dim, 1.0, _dim)
+    Gal = um.Unit.Create('Gal', _dim, 1.0)
 
 class AbsorbedDose:
     #                   'kg', 'm', 's', 'A', 'K', 'mol', 'cd', '$'
@@ -202,6 +202,7 @@ class Pressure:
     psi = um.Unit('psi', 6894.75729317 * Pa)
     psia = um.Unit('psia', 1.0 * psi)
     psig = um.Unit('psig', 6894.75729317 * Pa, 1.0 * atm)
+    Torr = um.Unit('torr', 1.0 * mmHg)
  
 class Resistance:
    #                    'kg', 'm', 's', 'A', 'K', 'mol', 'cd', '$'
@@ -389,5 +390,4 @@ if __name__ == '__main__':
         q1 = 3.0 / um.squared()
         print(q1)
 
-
-main()
+    main()
