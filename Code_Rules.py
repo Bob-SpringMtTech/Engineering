@@ -123,9 +123,12 @@
 import numpy as np
 import math
 
-from Engineering import unit_of_measure as um
-from Engineering import NIST330 as un
-from Engineering import Threads as Threads
+import sys
+eng_path = './Engineering'
+if not eng_path in sys.path:
+    sys.path.insert(0, eng_path)
+import NIST330 as un
+import Threads as Threads
 
 utf = un.Temperature.degF
 upsig = un.Pressure.psig
@@ -133,7 +136,7 @@ upsia = un.Pressure.psia
 upsi = un.Pressure.psi
 ulbf = un.Force.lbf
 uin = un.Length.inch
-uksi = um.Unit('ksi', upsi.Dimension, upsi.Factor * 1000.0)
+uksi = un.Stress.ksi
 usqin = un.Area.inSq
 uul = un.Dimensionless.none
 
@@ -158,14 +161,6 @@ ful = '0.3f' # format string for unitless values
 Test_Fail_Str = '\n  ***** Test Failed *****\n'
 Test_Pass_Str = 'Test Passed'
 
-def uFormat(q, u, f):
-    if(len(u.Symbol) > 0):
-        str = f'{q.Value(u):{f}} {u.Symbol}'
-    else:
-        str = f'{q.Value(u):{f}}'
-
-    return str
-
 verbose = True
 
 
@@ -176,11 +171,11 @@ def B31_3_Table304_1_1(D, d, c):
     if (t < (D / 6.0)):
         Y = 0.40 * uul
         f_str =  '  Y = from Table 304.1.1 (valid for temperatures up to 900F, other than cast iron)'
-        v_str = f'  Y = {uFormat(Y, uul, "0.3f")}'
+        v_str = f'  Y = {Y.Format(uul, "0.3f")}'
     else:
         Y = (d + c * 2.0) / (D + d + c * 2.0)
         f_str = '  Y = (d + 2*c) / (D + d + 2*c)'
-        v_str = f'  Y = {uFormat(Y, uul, "0.3f")} = ({uFormat(d, ulen, flen)} + 2 * {uFormat(c, ulen, flen)}) / ({uFormat(D, ulen, flen)} + {uFormat(d, ulen, flen)} + 2 * {uFormat(c, ulen, flen)})'
+        v_str = f'  Y = {Y.Format(uul, "0.3f")} = ({d.Format(ulen, flen)} + 2 * {c.Format(ulen, flen)}) / ({D.Format(ulen, flen)} + {d.Format(ulen, flen)} + 2 * {c.Format(ulen, flen)})'
 
     if (verbose):
         print(f_str)
@@ -206,19 +201,19 @@ def B31_3_Para304_1_2(P, D, d, c, S, E, W, t_act = (0.0 * uin)):
         f_str = '  t = (P*D) / (2 * (S*E*W + P*Y))'
     
         if (verbose):
-            st = uFormat(t, ulen, flen)
-            sP = uFormat(P, upr, fpr)
-            sD = uFormat(D, ulen, flen)
-            sc = uFormat(c, ulen, flen)
-            sS = uFormat(S, ust, fst)
-            sE = uFormat(E, uul, ful)
-            sW = uFormat(W, uul, ful)
-            sY = uFormat(Y, uul, ful)
+            st = t.Format(ulen, flen)
+            sP = P.Format(upr, fpr)
+            sD = D.Format(ulen, flen)
+            sc = c.Format(ulen, flen)
+            sS = S.Format(ust, fst)
+            sE = E.Format(uul, ful)
+            sW = W.Format(uul, ful)
+            sY = Y.Format(uul, ful)
             print(f_str)
             print(f'  t = {st} = ({sP} * {sD}) / (2 * ({sS} * {sE} * {sW} + {sP} * {sY} + {sc})')
 
             if (t_act.Value(uin) > 0.0):
-                st_act = uFormat(t_act, ulen, flen)
+                st_act = t_act.Format(ulen, flen)
                 if (t > t_act):
                     print(f'  t > t act {st_act}')
                     print(f'  {st} > {st_act}')
@@ -244,18 +239,17 @@ def UG34_C_2_Eq1(d, P, S, C, E, t_act = (0.0 * uin)):
     if (verbose):
         print(f_str)
 
-        sd = uFormat(d, ulen, flen)
-        st = uFormat(t, ulen, flen)
-        sd = uFormat(d, ulen, flen)
-        sP = uFormat(P, upr, fpr)
-        sS = uFormat(S, ust, fst)
-        sC = uFormat(C, uul, ful)
-        sE = uFormat(E, uul, ful)
+        sd = d.Format(ulen, flen)
+        st = t.Format(ulen, flen)
+        sP = P.Format(upr, fpr)
+        sS = S.Format(ust, fst)
+        sC = C.Format(uul, ful)
+        sE = E.Format(uul, ful)
 
         print(f'  t = {st} = {sd} * sqrt(({sC} * {sP}) / ({sS} * {sE}))')
 
         if (t_act.Value(uin) > 0.0):
-            st_act = uFormat(t_act, ulen, flen)
+            st_act = t_act.Format(ulen, flen)
             if (t > t_act):
                 print(f'  t > t act {st_act}')
                 print(f'  {st} > {st_act}')
@@ -265,7 +259,6 @@ def UG34_C_2_Eq1(d, P, S, C, E, t_act = (0.0 * uin)):
                 print(f'  t <= t act {st_act}')
                 print(f'  {st} <= {st_act}')
             print(f'  {status}\n')
-
 
     return t
 
@@ -286,12 +279,12 @@ def AppII_Dims(bo, od_contact_face, bolt_cir_dia):
     f3_str = '  hg = (bc - G) / 2'
 
     if (verbose):
-        bs   = uFormat(b, ulen, flen)
-        bos  = uFormat(bo, ulen, flen)
-        cfs  = uFormat(od_contact_face, ulen, flen)
-        bcs  = uFormat(bolt_cir_dia, ulen, flen)
-        Gs   = uFormat(G, ulen, flen)
-        hgs  = uFormat(hg, ulen, flen)
+        bs   = b.Format(ulen, flen)
+        bos  = bo.Format(ulen, flen)
+        cfs  = od_contact_face.Format(ulen, flen)
+        bcs  = bolt_cir_dia.Format(ulen, flen)
+        Gs   = G.Format(ulen, flen)
+        hgs  = hg.Format(ulen, flen)
 
         if (bo.Value(uin) > 0.250):
             v1_str = f'  b = {bs} = sqrt({bos}) / 2'
@@ -312,15 +305,13 @@ def AppII_Wm1(P, G, b, m):
     Wm1 = (G.squared() * P / 4.0 + b * G * P * m * 2.0) * math.pi
     f_str = '  Wm1 = pi * (G^2 * P / 4.0 + 2 * b * G * m * P)'
 
-    Wm1s = uFormat(Wm1, ufr, ffr)
-
     if (verbose):
         print(f_str)
-        sWm1 = uFormat(Wm1, ufr, ffr)
-        sP   = uFormat(P, upr, fpr)
-        sG   = uFormat(G, ulen, flen)
-        sb   = uFormat(b, ulen, flen)
-        sm   = uFormat(m, uul, ful)
+        sWm1 = Wm1.Format(ufr, ffr)
+        sP   = P.Format(upr, fpr)
+        sG   = G.Format(ulen, flen)
+        sb   = b.Format(ulen, flen)
+        sm   = m.Format(uul, ful)
 
         print(f'  Wm1 = {sWm1} = pi * (({sG})^2 * {sP} / 4.0 + 2 * {sb} * {sG} * {sm} * {sP})\n')
 
@@ -331,10 +322,10 @@ def AppII_Wm2(G, b, y):
     Wm2 = b * G * y * math.pi
     f_str = '  Wm2 = pi * b * G * y'
 
-    sWm2 = uFormat(Wm2, ufr, ffr)
-    sb   = uFormat(b, ulen, flen)
-    sG   = uFormat(G, ulen, flen)
-    sy   = uFormat(y, upr, fpr)
+    sWm2 = Wm2.Format(ufr, ffr)
+    sb   = b.Format(ulen, flen)
+    sG   = G.Format(ulen, flen)
+    sy   = y.Format(upr, fpr)
 
     if (verbose):
         print(f_str)
@@ -351,14 +342,15 @@ def UG34_C_2_Eq2_Operating(d, P, S1, W1, hg, C, E):
     if (verbose):
         print(f_str)
 
-        st = uFormat(t, ulen, flen)
-        sd = uFormat(d, ulen, flen)
-        sP = uFormat(P, upr, fpr)
-        sS = uFormat(S1, ust, fst)
-        sC = uFormat(C, uul, ful)
-        sE = uFormat(E, uul, ful)
-        sW = uFormat(W1, ufr, ffr)
-        shg = uFormat(hg, ulen, flen)
+        st = t.Format(ulen, flen)
+        sd = d.Format(ulen, flen)
+        sP = P.Format(upr, fpr)
+        sS = S1.Format(ust, fst)
+        sC = C.Format(uul, ful)
+        sE = E.Format(uul, ful)
+        sW = W1.Format(ufr, ffr)
+        shg = hg.Format(ulen, flen)
+
         print(f'  t1 = {st} = {sd} * sqrt( ({sC}* {sP}) / ({sS} * {sE}) + (1.9 * {sW} * {shg}) / ({sS} * {sE} * ({sd})^3) )\n')
 
     return t
@@ -367,12 +359,12 @@ def UG34_C_2_Eq2_Gasket(d, S2, W2, hg, E):
     # S2 and W2 correspond to the gasket seating case
     t = d * (W2 * hg / S2 / E / d.cubed()).sqrt()
     f_str = '  t2 = d * sqrt( (1.9*W*hg) / (S*E*d^3) )   UG34(c)(2)(2) gasket seating loads'
-    ts = uFormat(t, ulen, flen)
-    ds = uFormat(d, ulen, flen)
-    Ss = uFormat(S2, ust, fst)
-    Es = uFormat(E, uul, ful)
-    Ws = uFormat(W2, ufr, ffr)
-    hgs = uFormat(hg, ulen, flen)
+    ts = t.Format(ulen, flen)
+    ds = d.Format(ulen, flen)
+    Ss = S2.Format(ust, fst)
+    Es = E.Format(uul, ful)
+    Ws = W2.Format(ufr, ffr)
+    hgs = hg.Format(ulen, flen)
 
     if (verbose):
         print(f_str)
@@ -398,16 +390,16 @@ def UG34_C_2_Eq2(d, P, S1, S2, W1, W2, hg, C, E, t_act = (0.0 * uin)):
         s3 = '  Gasket seating loads govern'
 
     if (verbose):
-        st  = uFormat(t, ulen, flen)
-        st1 = uFormat(t1, ulen, flen)
-        st2 = uFormat(t2, ulen, flen)
+        st  = t.Format(ulen, flen)
+        st1 = t1.Format(ulen, flen)
+        st2 = t2.Format(ulen, flen)
         
         print('  t = max(t1, t2)')
         print(f'  t = {st} = max({st1}, {st2})')
         print(s3)
 
         if (t_act.Value(uin) > 0.0):
-            st_act = uFormat(t_act, ulen, flen)
+            st_act = t_act.Format(ulen, flen)
             if (t > t_act):
                 print(f'  t > t act {st_act}')
                 print(f'  {st} > {st_act}')
@@ -445,14 +437,14 @@ def AppII_Bolting(S, Wm, bolt_thd, N):
     f3_str = '  S act = Wm / a act'
 
     if (verbose):
-        stsa = uFormat(tsa, uar, far)
-        sa_act = uFormat(a_act, uar, far)
-        sS = uFormat(S, upr, fpr)
-        sWm = uFormat(Wm, ufr, ffr)
+        stsa = tsa.Format(uar, far)
+        sa_act = a_act.Format(uar, far)
+        sS = S.Format(upr, fpr)
+        sWm = Wm.Format(ufr, ffr)
         sbolt = f'{bolt_thd.Desc_Ext}'
         sN = f'{N}'
-        sa_reqd = uFormat(a_reqd, uar, far)
-        sS_act = uFormat(S_act, upr, fpr)
+        sa_reqd = a_reqd.Format(uar, far)
+        sS_act = S_act.Format(upr, fpr)
         
         print(f1_str)
         print(f'  A reqd = {sa_reqd} = {sWm} / {sS}')               
@@ -496,14 +488,14 @@ def Thread_Shear_Check(Wm, S_bolt, S_body, thread, N, LE):
     f3_str = '  S act = Wm / a act'
 
     if (verbose):
-        sssa = uFormat(ssa, uar, far)
-        sa_act = uFormat(a_act, uar, far)
-        sS = uFormat(S_bolt, upr, fpr)
-        sWm = uFormat(Wm, ufr, ffr)
+        sssa = ssa.Format(uar, far)
+        sa_act = a_act.Format(uar, far)
+        sS = S_bolt.Format(upr, fpr)
+        sWm = Wm.Format(ufr, ffr)
         sbolt = f'{thread.Desc_Ext}'
         sN = f'{N}'
-        sa_reqd = uFormat(a_reqd, uar, far)
-        sS_act = uFormat(S_act, upr, fpr)
+        sa_reqd = a_reqd.Format(uar, far)
+        sS_act = S_act.Format(upr, fpr)
         
         print(f1_str)
         print(f'  A reqd = {sa_reqd} = {sWm} / {sS}')               
@@ -535,14 +527,14 @@ def Thread_Shear_Check(Wm, S_bolt, S_body, thread, N, LE):
     f3_str = '  S act = Wm / a act'
 
     if (verbose):
-        sssa = uFormat(ssa, uar, far)
-        sa_act = uFormat(a_act, uar, far)
-        sS = uFormat(S_body, upr, fpr)
-        sWm = uFormat(Wm, ufr, ffr)
+        sssa = ssa.Format(uar, far)
+        sa_act = a_act.Format(uar, far)
+        sS = S_body.Format(upr, fpr)
+        sWm = Wm.Format(ufr, ffr)
         sbody = f'{thread.Desc_Int}'
         sN = f'{N}'
-        sa_reqd = uFormat(a_reqd, uar, far)
-        sS_act = uFormat(S_act, upr, fpr)
+        sa_reqd = a_reqd.Format(uar, far)
+        sS_act = S_act.Format(upr, fpr)
         
         print(f1_str)
         print(f'  A reqd = {sa_reqd} = {sWm} / {sS}')               
@@ -637,14 +629,14 @@ def B16_34_Min_Wall_Thickness(Pc, dia, t_act = (0.0 * uin)):
     else:
         t = np.round(t_in, 2) * uin
         if (verbose):
-            st = uFormat(t, ulen, flen)
-            sPc = uFormat(Pc, upr, fpr)
-            sdia = uFormat(dia, ulen, flen)
+            st = t.Format(ulen, flen)
+            sPc = Pc.Format(upr, fpr)
+            sdia = dia.Format(ulen, flen)
             print(f'  Pc  = {sPc}')
             print(f'  Dia = {sdia}')
  
             if (t_act.Value(uin) > 0.0):
-                st_act = uFormat(t_act, ulen, flen)
+                st_act = t_act.Format(ulen, flen)
                 if (t > t_act):
                     status = Test_Fail_Str
                     print(f'  t act < t')
@@ -666,8 +658,8 @@ def B16_34_Ag_to_Dg(Ag):
     f1_str = '  Dg = sqrt( Ag * 4.0 / pi'
 
     if (verbose):
-        sDg = uFormat(Dg, ulen, flen)
-        sAg = uFormat(Ag, uar, far)
+        sDg = Dg.Format(ulen, flen)
+        sAg = Ag.Format(uar, far)
 
         print(f1_str)
         print(f'  {sDg} = sqrt( {sAg} * 4.0 / pi )')
@@ -711,14 +703,14 @@ def B16_34_Bolted_Cover_Joint(Pc, Dg, bolt_thd, N, Sa):
         status = Test_Pass_Str
 
     if (verbose):
-        sPc = uFormat(Pc, upr, fpr)
-        sDg = uFormat(Dg, ulen, flen)
-        sAg = uFormat(Ag, uar, far)
+        sPc = Pc.Format(upr, fpr)
+        sDg = Dg.Format(ulen, flen)
+        sAg = Ag.Format(uar, far)
         sthd = f'{bolt_thd}'
-        sAs = uFormat(As, uar, far)
-        sAb = uFormat(Ab, uar, far)
-        sSa = uFormat(Sa, upr, fpr)
-        sS_act = uFormat(S_act, upr, fpr)
+        sAs = As.Format(uar, far)
+        sAb = Ab.Format(uar, far)
+        sSa = Sa.Format(upr, fpr)
+        sS_act = S_act.Format(upr, fpr)
 
         print(f1_str)
         print(f'  Ag = {sAg} = pi / 4 * ({sDg})^2')
@@ -768,13 +760,13 @@ def B16_34_Threaded_Cover_Joint(Pc, Dg, cover_thd, LE):
         status = Test_Pass_Str
 
     if (verbose):
-        sPc = uFormat(Pc, upr, fpr)
-        sDg = uFormat(Dg, ulen, flen)
-        sAg = uFormat(Ag, uar, far)
+        sPc = Pc.Format(upr, fpr)
+        sDg = Dg.Format(ulen, flen)
+        sAg = Ag.Format(uar, far)
         sthd = f'{cover_thd}'
-        sLE = uFormat(LE, ulen, flen)
-        sAs = uFormat(As, uar, far)
-        sS_act = uFormat(S_act, upr, fpr)
+        sLE = LE.Format(ulen, flen)
+        sAs = As.Format(uar, far)
+        sS_act = S_act.Format(upr, fpr)
 
         print(f1_str)
         print(f'  Ag = {sAg} = pi / 4 * ({sDg})^2')
@@ -823,13 +815,13 @@ def B16_34_Bolted_Body_Joint(Pc, Dg, bolt_thd, N, Sa):
         status = Test_Pass_Str
 
     if (verbose):
-        sPc = uFormat(Pc, upr, fpr)
-        sDg = uFormat(Dg, ulen, flen)
-        sAg = uFormat(Ag, uar, far)
+        sPc = Pc.Format(upr, fpr)
+        sDg = Dg.Format(ulen, flen)
+        sAg = Ag.Format(uar, far)
         sthd = f'{bolt_thd}'
-        sAb = uFormat(Ab, uar, far)
-        sSa = uFormat(Sa, upr, fpr)
-        sS_act = uFormat(S_act, upr, fpr)
+        sAb = Ab.Format(uar, far)
+        sSa = Sa.Format(upr, fpr)
+        sS_act = S_act.Format(upr, fpr)
 
         print(f1_str)
         print(f'  Ag = {sAg} = pi / 4 * ({sDg})^2')
@@ -878,13 +870,13 @@ def B16_34_Threaded_Body_Joint(Pc, Dg, cover_thd, LE):
         status = Test_Pass_Str
 
     if (verbose):
-        sPc = uFormat(Pc, upr, fpr)
-        sDg = uFormat(Dg, ulen, flen)
-        sAg = uFormat(Ag, uar, far)
+        sPc = Pc.Format(upr, fpr)
+        sDg = Dg.Format(ulen, flen)
+        sAg = Ag.Format(uar, far)
         sthd = f'{cover_thd}'
-        sLE = uFormat(LE, ulen, flen)
-        sAs = uFormat(As, uar, far)
-        sS_act = uFormat(S_act, upr, fpr)
+        sLE = LE.Format(ulen, flen)
+        sAs = As.Format(uar, far)
+        sS_act = S_act.Format(upr, fpr)
 
         print(f1_str)
         print(f'  Ag = {sAg} = pi / 4 * ({sDg})^2')
@@ -915,13 +907,13 @@ def TFFullFace_Dims(od, id, bc):
     f4_str = '  G = bc - 2 * hg'
 
     if (verbose):
-        sod  = uFormat(od, ulen, flen)
-        sid  = uFormat(id, ulen, flen)
-        sbc  = uFormat(bc, ulen, flen)
-        sb   = uFormat(b, ulen, flen)
-        shgi = uFormat(hg_i, ulen, flen)
-        shgo = uFormat(hg_o, ulen, flen)
-        sG   = uFormat(G, ulen, flen)
+        sod  = od.Format(ulen, flen)
+        sid  = id.Format(ulen, flen)
+        sbc  = bc.Format(ulen, flen)
+        sb   = b.Format(ulen, flen)
+        shgi = hg_i.Format(ulen, flen)
+        shgo = hg_o.Format(ulen, flen)
+        sG   = G.Format(ulen, flen)
 
         print (f'  od = {sod}')
         print (f'  id = {sid}')
@@ -946,13 +938,13 @@ def TFFullFace_Wm1(P, G, b, m, hg_i, hg_o):
 
     if (verbose):
         print(f_str)
-        sWm1 = uFormat(Wm1, ufr, ffr)
-        sP   = uFormat(P, upr, fpr)
-        sG   = uFormat(G, ulen, flen)
-        sb   = uFormat(b, ulen, flen)
-        sm   = uFormat(m, uul, ful)
-        shgi = uFormat(hg_i, ulen, flen)
-        shgo = uFormat(hg_o, ulen, flen)
+        sWm1 = Wm1.Format(ufr, ffr)
+        sP   = P.Format(upr, fpr)
+        sG   = G.Format(ulen, flen)
+        sb   = b.Format(ulen, flen)
+        sm   = m.Format(uul, ful)
+        shgi = hg_i.Format(ulen, flen)
+        shgo = hg_o.Format(ulen, flen)
 
         print(f'  {sWm1} = pi * {sP} * (({sG})^2 / 4 + (1 + {shgi} / {shgo}) * 2 * {sb} * {sG} * {sm})')
 
@@ -965,12 +957,12 @@ def TFFullFace_Wm2(G, b, y, hg_i, hg_o):
     f_str = "  Wm2 = pi * b * G * y * (1 + hg / h'g) "
 
     if (verbose):
-        sWm2 = uFormat(Wm2, ufr, ffr)
-        sb   = uFormat(b, ulen, flen)
-        sG   = uFormat(G, ulen, flen)
-        sy   = uFormat(y, upr, fpr)
-        shgi = uFormat(hg_i, ulen, flen)
-        shgo = uFormat(hg_o, ulen, flen)
+        sWm2 = Wm2.Format(ufr, ffr)
+        sb   = b.Format(ulen, flen)
+        sG   = G.Format(ulen, flen)
+        sy   = y.Format(upr, fpr)
+        shgi = hg_i.Format(ulen, flen)
+        shgo = hg_o.Format(ulen, flen)
 
         print(f_str)
         print(f'  Wm2 = {sWm2} = pi * {sb} * {sG} * {sy} * (1 + {shgi} / {shgo})')

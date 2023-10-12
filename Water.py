@@ -1,8 +1,8 @@
 import numpy as np
 from dataclasses import dataclass
 from enum import Enum
-import unit_of_measure as um
-import NIST330 as un
+from Engineering import unit_of_measure as um
+from Engineering import NIST330 as un
 
 class WaterIAPWS97:
 	pass

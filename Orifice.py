@@ -1,11 +1,10 @@
 import numpy as np
 import math
-import unit_of_measure as um
-import NIST330 as un
+from Engineering import unit_of_measure as um
+from Engineering import NIST330 as un
 from Engineering import Water as h2o
 
-_k = (1.0 * un.Mass.lbm) / (1.0 * un.Time.hr)
-upph = um.Unit('lbm/hr', _k.Dimension, _k.SIValue)
+upph = um.Unit('lbm/hr', 1.0 * un.Mass.lbm / un.Time.hr)
 
 def OrificeSteamFlow(dia, cd, p1, p2):
     water = h2o.WaterIAPWS97()

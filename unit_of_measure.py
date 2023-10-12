@@ -25,7 +25,6 @@ class Unit:
 
 class Dimension:
     symbol = ['kg', 'm', 's', 'A', 'K', 'mol', 'cd', '$']
-    baseTypeName = 'Dimension'
 
     def __init__(self, other):
         self._exp = np.zeros(BaseQuantity._Count.value, dtype=np.int8)
@@ -81,9 +80,7 @@ class Dimension:
         result = result.removesuffix('1')
         return result
         
-    @property
-    def BaseTypeName(self) -> str:
-        return Dimension.baseTypeName
+    BaseTypeName = 'Dimension'
 
     @property
     def HasDimension(self) -> bool:
@@ -156,8 +153,6 @@ Currency_dimension          = Dimension([0, 0, 0, 0, 0, 0, 0, 1])
 
 
 class Quantity:
-    baseTypeName = 'Quantity'
-
     def __init__(self, qty = None):
         if qty is None:
             self._val = np.nan
@@ -183,9 +178,7 @@ class Quantity:
         return qty
 
 
-    @property
-    def BaseTypeName(self) -> str:
-        return Quantity.baseTypeName
+    BaseTypeName = 'Quantity'
 
 
     @property
@@ -221,12 +214,12 @@ class Quantity:
 
 
     def Similar(self, other) -> bool:
-        if other.BaseTypeName == Quantity.baseTypeName:
-            return self._dimension == other._dimension
-        if other.BaseTypeName == Unit.baseTypeName:
-           return self._dimension == other.Dimension
-        if other.BaseTypeName == Dimension.baseTypeName:
-           return self._dimension == other
+        if other.BaseTypeName == Quantity.BaseTypeName:
+            return self.Dimension == other.Dimension
+        if other.BaseTypeName == Unit.BaseTypeName:
+           return self.Dimension == other.Dimension
+        if other.BaseTypeName == Dimension.BaseTypeName:
+           return self.Dimension == other
             
         raise TypeError("Argument type not supported: %s " % other)
 
@@ -276,7 +269,7 @@ class Quantity:
 
 
     def __add__(self, other : Quantity) -> Quantity:
-        if other.BaseTypeName == Quantity.baseTypeName:
+        if other.BaseTypeName == Quantity.BaseTypeName:
             if self.Similar(other):
                 return Quantity.Create(self._val + other._val, self._dimension)
             else:
@@ -285,7 +278,7 @@ class Quantity:
 
 
     def __radd__(self, other : Quantity) -> Quantity:
-        if other.BaseTypeName == Quantity.baseTypeName:
+        if other.BaseTypeName == Quantity.BaseTypeName:
             if self._unit.Similar(other):
                 return Quantity.Create(self._val + other._val, self._dimension)
             else:
@@ -294,7 +287,7 @@ class Quantity:
 
 
     def __sub__(self, other : Quantity) -> Quantity:
-        if other.BaseTypeName == Quantity.baseTypeName:
+        if other.BaseTypeName == Quantity.BaseTypeName:
             if self.Similar(other):
                 return Quantity.Create(self._val - other._val, self._dimension)
             else:
@@ -312,7 +305,7 @@ class Quantity:
         if type(other) == int:
             return Quantity.Create(self._val * float(other), self._dimension)
         
-        if other.BaseTypeName == Quantity.baseTypeName:
+        if other.BaseTypeName == Quantity.BaseTypeName:
             return Quantity.Create(self._val * other._val, self._dimension * other._dimension)
         
         raise TypeError(f"***Unable to multiply type {type(other)} of {other} to Quantity")
@@ -332,7 +325,7 @@ class Quantity:
         if type(other) == int:
             return Quantity.Create(self._val / float(other), self._dimension)
         
-        if other.BaseTypeName == Quantity.baseTypeName:
+        if other.BaseTypeName == Quantity.BaseTypeName:
             return Quantity.Create(self._val / other._val, self._dimension / other._dimension)
         
         raise TypeError("Unable to divide Quantity by %s" % other)
@@ -374,7 +367,7 @@ class Quantity:
             else:
                 return f'{self._val}:{format_spec} {self.Dimension}'
 
-        if not self.Similar(unit):
+        if not self.Similar(unit.Factor):
             raise ValueError(f'invalid unit conversion: {unit.Symbol}')
 
         if len(format_spec) == 0:
@@ -385,6 +378,142 @@ class Quantity:
             #result = f'{self.Value(unit):{format_spec}} {unit.Symbol}'
         return result
 
+class Unit(Quantity):
+
+    def __init__(self, symbol : str, factor : Quantity, offset : Quantity = None):
+        if factor.SIValue <= 0.0:
+            raise ValueError("factor must be positive: %s " % factor)
+        if not offset is None:
+            if not factor.Similar(offset):
+                raise ValueError("factor and offset must have equal dimensions")
+
+        # user_val = (base_val - offset) / factor) 
+        # base_val = user_val * factor + offset
+        if symbol is None:
+            self._symbol = factor.Dimension.__str__()
+        else:
+            self._symbol = symbol
+        
+        self._factor = factor
+        if offset is None:
+            self._offset = 0.0 * factor
+        else:
+            self._offset = offset
+    
+
+    @classmethod
+    def Create(cls, symbol: str, dimension : Dimension, factor : float, offset : float = 0.0) -> Unit:
+        return Unit(symbol, Quantity.Create(factor, dimension), Quantity.Create(offset, dimension))
+
+
+    def Value(self, qty : Quantity) -> float:
+        if (qty.Similar(self._factor)):
+            return (qty.SIValue - self._offset.SIValue) / self._factor.SIValue
+        else:
+            raise ValueError(f'qty can not be expressed in {self._symbol} units')
+
+
+    BaseTypeName = 'Unit'
+
+
+    @property
+    def Factor(self) -> Quantity:
+        return self._factor
+
+
+    @property
+    def Offset(self) -> Quantity:
+        return self._offset
+
+
+    @property
+    def Symbol(self) -> str:
+        return self._symbol
+
+
+    @property
+    def HasDimension(self) -> bool:
+        return True
+
+
+    @property
+    def Dimension(self) -> Dimension:
+        return self.Factor.Dimension
+
+
+    def __repr__(self):
+        if self._offset.SIValue == 0.0:
+            return f'Unit({self._symbol}, Dimension({self._factor.Dimension}), factor={self._factor.SIValue})'
+        else:
+            return f'Unit({self._symbol}, Dimension({self._factor.Dimension}), factor={self._factor.SIValue} offset={self._offset.SIValue})'
+
+
+    def __str__(self):
+        foo = 1.0 * self
+        return f'{foo.SIValue} {self.Dimension} = {self.Value(foo)} {self._symbol}'
+
+
+    def __eq__(self, other) -> bool:
+        if type(other) == Unit:
+            if self.Factor == other.Factor:
+                if self.Offset == other.Offset:
+                    return True
+
+        return False
+
+
+    # user_val = (base_val - offset) / factor) 
+    # base_val = user_val * factor + offset
+    def __mul__(self, other) -> Quantity:
+        return other * self.Factor + self.Offset
+            
+
+    def __rmul__(self, other) -> Quantity:
+        return self.__mul__(other)
+            
+
+    def __truediv__(self, other) -> Quantity:
+        if self._offset.SIValue == 0.0:
+            return self._factor / other
+        else:
+            raise ValueError('division of Units with offsets is invalid')
+
+
+    def __rtruediv__(self, other) -> Quantity:
+        if self._offset.SIValue == 0.0:
+            return other / self.Factor
+        else:
+            raise ValueError('division by Units with offsets is invalid')
+
+
+    def power(self, numer, denom = 1) -> Quantity:
+        if self._offset.SIValue == 0.0:
+            return self.Factor.power(numer, denom)
+        else:
+            raise ValueError('power() is invalid with Units with offsets')
+
+
+    def sqrt(self) -> Quantity:
+        if self._offset.SIValue == 0.0:
+            return self.Factor.sqrt()
+        else:
+            raise ValueError('sqrt() is invalid with Units with offsets')
+
+
+    def squared(self) -> Quantity:
+        if self._offset.SIValue == 0.0:
+            return self.Factor.squared()
+        else:
+            raise ValueError('squared() is invalid with Units with offsets')
+
+
+    def cubed(self) -> Quantity:
+        if self._offset.SIValue == 0.0:
+            return self.Factor.cubed()
+        else:
+            raise ValueError('cubed() is invalid with Units with offsets')
+
+"""
 class Unit(Quantity):
 
     def __init__(self, symbol : str, factor : Quantity, offset : Quantity = None):
@@ -504,7 +633,7 @@ class Unit(Quantity):
         else:
             raise ValueError('cubed() is invalid with Units with offsets')
 
-
+"""
 # Create the fundamental units
 # 'kg', 'm', 's', 'A', 'K', 'mol', 'cd', '$'
 # unitless = Unit('', Quantity(1.0, Dimensionless))

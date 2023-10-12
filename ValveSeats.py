@@ -1,17 +1,15 @@
 import math
+import sys
+eng_path = './Engineering'
+if not eng_path in sys.path:
+    sys.path.insert(0, eng_path)
+import NIST330 as un
 
-from Engineering import unit_of_measure as um
-from Engineering import NIST330 as un
+def uFormat(q, u, f): # this function will be removed eventually.
+    return q.Format(u, f)
 
-def uFormat(q, u, f):
-    if(len(u.Symbol) > 0):
-        str = f'{q.Value(u):{f}} {u.Symbol}'
-    else:
-        str = f'{q.Value(u):{f}}'
-
-    return str
-
-conv_fac = 39.37 # convert meters to inches
+# conv_fac = 39.37 # convert meters to inches
+conv_fac = (1.0 * un.Length.m).Value(un.Length.inch)
 
 class Point2d:
     def __init__(self, x, y, name = None):
