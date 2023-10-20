@@ -1,8 +1,13 @@
 import numpy as np
 from dataclasses import dataclass
 from enum import Enum
-from Engineering import unit_of_measure as um
-from Engineering import NIST330 as un
+
+import sys
+eng_path = 'D:/SpringMountTech/Technical/Code Python/Engineering'
+if not eng_path in sys.path:
+    sys.path.append(eng_path)
+
+import NIST330 as un
 
 class WaterIAPWS97:
 	pass
@@ -33,10 +38,10 @@ class Region:
 	def __init__(self):
 		self.Properties = FluidProp()
 
-	def InRange(press: um.Quantity, temp: um.Quantity):
+	def InRange(press: un.Quantity, temp: un.Quantity):
 		return False
 
-	def Eval(self, press: um.Quantity, temp: um.Quantity):
+	def Eval(self, press: un.Quantity, temp: un.Quantity):
 		return self.Properties
 		
 
@@ -54,7 +59,7 @@ class Boundary4:
 	tbl34.append(EqnCoeff(0, 0, -2.3855557567849E-01))
 	tbl34.append(EqnCoeff(0, 0,  6.5017534844798E+02))
 
-	def InRange(pt : um.Quantity):
+	def InRange(pt : un.Quantity):
 		_inRange = False
 
 		if (pt.Similar(un.Temperature.degK)):
@@ -73,7 +78,7 @@ class Boundary4:
 		return _inRange
 
 
-	def Psat(temp: um.Quantity):
+	def Psat(temp: un.Quantity):
 		if (not Boundary4.InRange(temp)):
 			return np.nan * un.Pressure.MPa
 
@@ -95,7 +100,7 @@ class Boundary4:
 		return pr * un.Pressure.MPa
 
 
-	def Tsat(press: um.Quantity):
+	def Tsat(press: un.Quantity):
 		if (not Boundary4.InRange(press)):
 			return np.nan * un.Temperature.degK
 
@@ -121,7 +126,7 @@ class Boundary4:
 
 
 class B23:
-	def __init__(self, tp: um.Quantity):
+	def __init__(self, tp: un.Quantity):
 		tbl1 = [  0.0,
 				  0.34805185628969e+3,
 				 -0.11671859879975e+1, 
@@ -209,7 +214,7 @@ class Region1(Region):
 	def __init__(self):
 		Region.__init__(self)
 
-	def InRange(press: um.Quantity, temp: um.Quantity):
+	def InRange(press: un.Quantity, temp: un.Quantity):
 		status = True
 
 		t = temp.Value(un.Temperature.degK)
@@ -232,7 +237,7 @@ class Region1(Region):
 			
 		return status
 		
-	def Eval(self, press: um.Quantity, temp: um.Quantity):
+	def Eval(self, press: un.Quantity, temp: un.Quantity):
 		pStar = 16.53
 		tStar = 1386.0
 
@@ -351,7 +356,7 @@ class Region2(Region):
 	def __init__(self):
 		Region.__init__(self)
 
-	def InRange(press: um.Quantity, temp: um.Quantity):
+	def InRange(press: un.Quantity, temp: un.Quantity):
 		t = temp.Value(un.Temperature.degK)
 		p = press.Value(un.Pressure.MPa)
 		ps = Boundary4.Psat(temp).Value(un.Pressure.MPa)
@@ -378,7 +383,7 @@ class Region2(Region):
 
 		return _inRange
 
-	def Eval(self, press: um.Quantity, temp: um.Quantity):
+	def Eval(self, press: un.Quantity, temp: un.Quantity):
 		pStar = 1.0
 		tStar = 540.0
 
@@ -491,7 +496,7 @@ class WaterIAPWS97:
 		self.Saturation = SatType.SatOff
 		self.Properties = FluidProp()
 
-	def SetCond(self, press : um.Quantity = pNan, temp : um.Quantity = tNan):
+	def SetCond(self, press : un.Quantity = pNan, temp : un.Quantity = tNan):
 		self.Properties.Press = press
 		self.Properties.Temp = temp
 
@@ -552,5 +557,5 @@ class WaterIAPWS97:
 		if (q > 0.0 and q < 1.0):
 			self.Properties.AcousticVel = np.nan * un.Velocity.mps
 
-def MixValues(quality, liq : um.Quantity, vap : um.Quantity):
+def MixValues(quality, liq : un.Quantity, vap : un.Quantity):
 	return (vap * quality) + (liq * (1.0 - quality))

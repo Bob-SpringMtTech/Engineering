@@ -124,9 +124,10 @@ import numpy as np
 import math
 
 import sys
-eng_path = './Engineering'
+eng_path = 'D:/SpringMountTech/Technical/Code Python/Engineering'
 if not eng_path in sys.path:
-    sys.path.insert(0, eng_path)
+    sys.path.append(eng_path)
+
 import NIST330 as un
 import Threads as Threads
 
