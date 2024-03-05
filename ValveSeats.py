@@ -261,7 +261,7 @@ def TruncConeArea(bigRadius, smallRadius, height):
 #  htSeat      - the vertical distance between the upper corner and lower corner of the seat
 #  srPlug      - spherical radius of the plug.  Set equal to zero to calculate the sph rad that will put the 
 #                contact circle at the mid point of the seat.
-#  diaFlatPlug - the diameter at the termination of the spherical radius
+#  diaFlatPlug - the diameter at the termination of the spherical radius on the lower corner
 #  diaStem     - the diameter of the stem below the lower corner of the seat
 #
 # Plugs can contact the seat on the lower corner, upper corner, or on the bevel.
