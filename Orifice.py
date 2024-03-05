@@ -1,8 +1,12 @@
 import numpy as np
 import math
-from Engineering import unit_of_measure as um
-from Engineering import NIST330 as un
-from Engineering import Water as h2o
+import sys
+eng_path = 'D:/SpringMountTech/Technical/Code Python/Engineering'
+if not eng_path in sys.path:
+    sys.path.insert(0, eng_path)
+import unit_of_measure as um
+import NIST330 as un
+import Water as h2o
 
 upph = um.Unit('lbm/hr', 1.0 * un.Mass.lbm / un.Time.hr)
 

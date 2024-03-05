@@ -1,6 +1,6 @@
 import numpy as np
 import sys
-eng_path = './Engineering'
+eng_path = 'D:/SpringMountTech/Technical/Code Python/Engineering'
 if not eng_path in sys.path:
     sys.path.insert(0, eng_path)
 from unit_of_measure import *
@@ -330,7 +330,7 @@ class VolFlowRate:
    #                    'kg', 'm', 's', 'A', 'K', 'mol', 'cd', '$'
     _dim = Dimension([0,    3,  -1,   0,   0,   0,     0,    0])
     m3_s = Unit.Create('m^3/s', _dim, 1.0)
-    lpm = Unit('ccm', 1.0 * Volume.liter / Time.min)
+    lpm = Unit('lpm', 1.0 * Volume.liter / Time.min)
 
     gpm = Unit('gpm', 1.0 * Volume.gal / Time.min)
     gph = Unit('gph', 1.0 * Volume.gal / Time.hr)
